@@ -1,0 +1,18 @@
+# Optional cluster-admin GitOps application. Sync manually, before workload roots.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mq-ocp-platform
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/iic/cp4i
+    targetRevision: main
+    path: mq/ocp/platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: iic-mq-operators
+  syncPolicy:
+    syncOptions:
+    - ServerSideApply=true
