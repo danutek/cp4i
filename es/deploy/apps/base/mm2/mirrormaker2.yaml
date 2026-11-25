@@ -1,0 +1,119 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaMirrorMaker2
+metadata:
+  name: kafka-mm2
+  labels:
+    app: mirrormaker2
+    app.kubernetes.io/component: replication
+    app.kubernetes.io/part-of: streamsage
+spec:
+  version: 4.1.1
+  # Set to 1 per licensing — single replicated instance
+  replicas: 1
+  connectCluster: target-cluster
+  clusters:
+    - alias: source-cluster
+      # Bootstrap server overridden in the DR overlay with the prod external route
+      bootstrapServers: REPLACE_WITH_PROD_EXTERNAL_BOOTSTRAP
+      authentication:
+        type: scram-sha-512
+        username: mm2-source-user
+        passwordSecret:
+          secretName: mm2-production-user-password
+          password: password
+      tls:
+        trustedCertificates:
+          - secretName: mm2-production-user-cert
+            certificate: ca.crt
+      config:
+        config.storage.replication.factor: 3
+        offset.storage.replication.factor: 3
+        status.storage.replication.factor: 3
+        ssl.endpoint.identification.algorithm: https
+
+    - alias: target-cluster
+      bootstrapServers: kafka-es-kafka-bootstrap.kafka-dr.svc:9093
+      authentication:
+        type: scram-sha-512
+        username: mm2-target-user
+        passwordSecret:
+          secretName: mm2-target-user
+          password: password
+      tls:
+        trustedCertificates:
+          - secretName: kafka-es-cluster-ca-cert
+            certificate: ca.crt
+      config:
+        config.storage.replication.factor: 3
+        offset.storage.replication.factor: 3
+        status.storage.replication.factor: 3
+        ssl.endpoint.identification.algorithm: https
+
+  mirrors:
+    - sourceCluster: source-cluster
+      targetCluster: target-cluster
+      sourceConnector:
+        tasksMax: 10
+        config:
+          replication.factor: 3
+          offset-syncs.topic.replication.factor: 3
+          sync.topic.acls.enabled: 'false'
+          refresh.topics.interval.seconds: 60
+          replication.policy.class: org.apache.kafka.connect.mirror.IdentityReplicationPolicy
+          topics: '.*'
+          topics.exclude: '__consumer_offsets|__transaction_state|connect-.*|_schemas|__eventstreams.*'
+      heartbeatConnector:
+        tasksMax: 1
+        config:
+          heartbeats.topic.replication.factor: 3
+          replication.policy.class: org.apache.kafka.connect.mirror.IdentityReplicationPolicy
+      checkpointConnector:
+        tasksMax: 1
+        config:
+          checkpoints.topic.replication.factor: 3
+          sync.group.offsets.enabled: 'true'
+          sync.group.offsets.interval.seconds: 60
+          emit.checkpoints.interval.seconds: 60
+          replication.policy.class: org.apache.kafka.connect.mirror.IdentityReplicationPolicy
+          refresh.groups.interval.seconds: 60
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+  livenessProbe:
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 15
+    timeoutSeconds: 5
+
+  metricsConfig:
+    type: jmxPrometheusExporter
+    valueFrom:
+      configMapKeyRef:
+        name: kafka-connect-metrics
+        key: kafka-connect-metrics-config.yaml
+
+  template:
+    pod:
+      metadata:
+        labels:
+          app: mirrormaker2
+          component: replication
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mirrormaker2
+                topologyKey: kubernetes.io/hostname

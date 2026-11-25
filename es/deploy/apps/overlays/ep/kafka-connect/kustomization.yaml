@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kafka-ep
+
+bases:
+  - ../../../base/kafka-connect
+
+patches:
+  - path: kafka-connect-patch.yaml
+
+commonLabels:
+  environment: ep
+  app.kubernetes.io/instance: kafka-connect-ep
+  app.kubernetes.io/part-of: streamsage

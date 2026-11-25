@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: eventstreams-monitor
+  labels:
+    app.kubernetes.io/name: kafka-es
+    app.kubernetes.io/part-of: streamsage
+spec:
+  selector:
+    matchLabels:
+      eventstreams.ibm.com/cluster: kafka-es
+  podMetricsEndpoints:
+    - path: /metrics
+      port: tcp-prometheus
+      interval: 30s

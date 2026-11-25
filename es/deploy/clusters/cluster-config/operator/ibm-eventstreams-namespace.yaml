@@ -1,0 +1,21 @@
+# IBM Event Streams Operator Namespace
+# The operator itself lives here; it manages EventStreams CRs in kafka-{env} namespaces.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ibm-eventstreams
+  labels:
+    kubernetes.io/metadata.name: ibm-eventstreams
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "IBM Event Streams Operator"
+    openshift.io/description: "Namespace hosting the IBM Event Streams OLM operator"
+spec:
+  finalizers:
+    - kubernetes

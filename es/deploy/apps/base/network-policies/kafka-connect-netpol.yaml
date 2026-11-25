@@ -1,0 +1,108 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: NetworkPolicy for Kafka Connect isolation and security
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-connect-policy
+  labels:
+    app.kubernetes.io/component: kafka-connect
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      eventstreams.ibm.com/kind: KafkaConnect
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from Kafka Connect REST API clients
+    - from:
+        - podSelector:
+            matchLabels:
+              app: kafka-connect-client
+      ports:
+        - protocol: TCP
+          port: 8083  # REST API
+    
+    # Allow from monitoring (Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 9404  # Metrics port
+    
+    # Allow inter-connect communication (for distributed mode)
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaConnect
+      ports:
+        - protocol: TCP
+          port: 8083
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow to Kafka brokers
+    - to:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+      ports:
+        - protocol: TCP
+          port: 9093  # Internal TLS
+        - protocol: TCP
+          port: 9092  # Internal plaintext
+    
+    # Allow to PostgreSQL (for JDBC connectors)
+    - to:
+        - namespaceSelector: {}
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # Allow to external databases and services
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 80    # HTTP
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 3306  # MySQL
+        - protocol: TCP
+          port: 1433  # SQL Server
+        - protocol: TCP
+          port: 50000 # DB2
+    
+    # Allow inter-connect communication
+    - to:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaConnect
+      ports:
+        - protocol: TCP
+          port: 8083
+
+

@@ -1,0 +1,17 @@
+# CloudNativePG Operator Subscription
+# Installs the CloudNativePG operator from OperatorHub community catalog.
+# CloudNativePG manages PostgreSQL Cluster CRs used by StreamSage services.
+# installPlanApproval: Manual — same gating strategy as Event Streams.
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: cloudnative-pg
+  namespace: openshift-operators
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  channel: stable-v1
+  name: cloudnative-pg
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Manual

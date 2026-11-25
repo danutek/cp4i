@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - pgcluster.yaml
+  - schema-init-job.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: streamsage
+
+configMapGenerator:
+  - name: streamsage-ddl-core
+    files:
+      - migrations/core/01_core_tables.sql
+      - migrations/core/02_flexible_attributes.sql
+      - migrations/core/03_relationships.sql
+      - migrations/core/04_attachments.sql
+      - migrations/core/05_audit_logging.sql
+      - migrations/core/06_workflow_engine.sql
+      - migrations/core/07_user_security.sql
+      - migrations/core/08_notifications_config.sql
+      - migrations/core/09_views.sql
+      - migrations/core/10_reference_data.sql
+      - migrations/core/11_outbox.sql
+      - migrations/core/12_add_ingest_message_id.sql
+    options:
+      disableNameSuffixHash: true
+  - name: streamsage-ddl-family
+    files:
+      - migrations/family/001_family.sql
+      - migrations/family/002_family_member.sql
+      - migrations/family/003_family_rule.sql
+      - migrations/family/004_family_history.sql
+      - migrations/family/005_family_indexes.sql
+    options:
+      disableNameSuffixHash: true
+  - name: streamsage-ddl-ai
+    files:
+      - migrations/ai/001_ai_model_registry.sql
+      - migrations/ai/002_ai_output_schema.sql
+      - migrations/ai/003_ai_prompt_template.sql
+      - migrations/ai/004_ai_policy_rule.sql
+      - migrations/ai/005_ai_analysis_request.sql
+      - migrations/ai/006_ai_context_snapshot.sql
+      - migrations/ai/007_ai_retrieval_context.sql
+      - migrations/ai/008_ai_observation.sql
+      - migrations/ai/009_ai_recommendation.sql
+      - migrations/ai/010_ai_recommendation_action.sql
+      - migrations/ai/011_ai_review_decision.sql
+      - migrations/ai/012_ai_action_execution.sql
+      - migrations/ai/013_ai_feedback_signal.sql
+      - migrations/ai/014_ai_indexes.sql
+    options:
+      disableNameSuffixHash: true

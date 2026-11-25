@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingest-service-config
+  labels:
+    app: ingest-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-es-kafka-bootstrap.kafka-dev.svc:9092"
+  KAFKA_TOPIC: "streamsage.ingest.transaction"
+  KAFKA_GROUP_ID: "streamsage-ingest-py"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"
+  LOG_LEVEL: "INFO"

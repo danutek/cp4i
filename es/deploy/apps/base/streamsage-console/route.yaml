@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: streamsage-console
+  labels:
+    app.kubernetes.io/name: streamsage-console
+spec:
+  to:
+    kind: Service
+    name: streamsage-console
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

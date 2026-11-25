@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for QA Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-qa
+  namespace: openshift-gitops
+  labels:
+    environment: qa
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage QA - Quality assurance and validation
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-qa'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-qa'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: qa-admin
+      description: Full access to qa environment
+      policies:
+        - p, proj:streamsage-qa:qa-admin, applications, *, streamsage-qa/*, allow
+        - p, proj:streamsage-qa:qa-admin, applications, sync, streamsage-qa/*, allow
+        - p, proj:streamsage-qa:qa-admin, applications, override, streamsage-qa/*, allow
+        - p, proj:streamsage-qa:qa-admin, applications, action/*, streamsage-qa/*, allow
+      groups:
+        - streamsage-qa-admins
+        - platform-engineers
+
+    - name: qa-viewer
+      description: Read-only access to qa environment
+      policies:
+        - p, proj:streamsage-qa:qa-viewer, applications, get, streamsage-qa/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-18 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

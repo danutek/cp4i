@@ -1,0 +1,45 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaUser
+metadata:
+  name: kb-user
+  labels:
+    eventstreams.ibm.com/cluster: kafka-es
+    app.kubernetes.io/part-of: streamsage
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      # Consumer permissions
+      - resource:
+          type: topic
+          name: '*'
+          patternType: literal
+        operations:
+          - Read
+          - Describe
+        host: '*'
+      - resource:
+          type: group
+          name: '*'
+          patternType: literal
+        operations:
+          - Read
+        host: '*'
+      # Producer permissions
+      - resource:
+          type: topic
+          name: '*'
+          patternType: literal
+        operations:
+          - Write
+          - Create
+          - Describe
+        host: '*'
+      # Cluster permissions
+      - resource:
+          type: cluster
+        operations:
+          - Describe
+        host: '*'

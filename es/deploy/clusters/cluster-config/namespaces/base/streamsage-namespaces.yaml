@@ -1,0 +1,191 @@
+# streamsage-{env} namespaces — API gateway, services, console, AI workloads
+# One Namespace per environment, 9 environments total.
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-dev
+  labels:
+    kubernetes.io/metadata.name: streamsage-dev
+    environment: dev
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (dev)"
+    openshift.io/description: "StreamSage application services — dev environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-test
+  labels:
+    kubernetes.io/metadata.name: streamsage-test
+    environment: test
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (test)"
+    openshift.io/description: "StreamSage application services — test environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-qa
+  labels:
+    kubernetes.io/metadata.name: streamsage-qa
+    environment: qa
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (qa)"
+    openshift.io/description: "StreamSage application services — qa environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-staging
+  labels:
+    kubernetes.io/metadata.name: streamsage-staging
+    environment: staging
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (staging)"
+    openshift.io/description: "StreamSage application services — staging environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-perf
+  labels:
+    kubernetes.io/metadata.name: streamsage-perf
+    environment: perf
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (perf)"
+    openshift.io/description: "StreamSage application services — performance environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-prod
+  labels:
+    kubernetes.io/metadata.name: streamsage-prod
+    environment: prod
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (prod)"
+    openshift.io/description: "StreamSage application services — production environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-ep
+  labels:
+    kubernetes.io/metadata.name: streamsage-ep
+    environment: ep
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (ep)"
+    openshift.io/description: "StreamSage application services — ep environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-eem
+  labels:
+    kubernetes.io/metadata.name: streamsage-eem
+    environment: eem
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (eem)"
+    openshift.io/description: "StreamSage application services — EEM environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: streamsage-dr
+  labels:
+    kubernetes.io/metadata.name: streamsage-dr
+    environment: dr
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Services (dr)"
+    openshift.io/description: "StreamSage application services — disaster recovery environment"
+spec:
+  finalizers:
+    - kubernetes

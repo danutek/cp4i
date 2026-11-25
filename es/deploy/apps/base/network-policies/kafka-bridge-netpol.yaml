@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-bridge-policy
+  labels:
+    app.kubernetes.io/component: kafka-bridge
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      eventstreams.ibm.com/kind: KafkaBridge
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow from application pods (HTTP REST API clients)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 8080  # HTTP REST API
+    # Allow from OpenShift Router (for external access)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow Prometheus metrics scraping
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 9404
+
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow to Kafka brokers
+    - to:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+      ports:
+        - protocol: TCP
+          port: 9093  # Internal TLS
+        - protocol: TCP
+          port: 9092  # Internal plaintext

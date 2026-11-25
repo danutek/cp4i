@@ -1,0 +1,65 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mirrormaker2-policy
+  labels:
+    app.kubernetes.io/name: mirrormaker2
+    app.kubernetes.io/component: replication
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      strimzi.io/kind: KafkaMirrorMaker2
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow Prometheus metrics scraping
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9404  # Prometheus metrics
+    # Allow REST API access for management
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka-connect
+      ports:
+        - protocol: TCP
+          port: 8083
+
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to local Kafka cluster
+    - to:
+        - podSelector:
+            matchLabels:
+              strimzi.io/kind: Kafka
+              strimzi.io/cluster: kafka-es
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 9093
+    # Allow egress to remote Kafka cluster (cross-cluster DR replication via external route)
+    - ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9094
+        - protocol: TCP
+          port: 443

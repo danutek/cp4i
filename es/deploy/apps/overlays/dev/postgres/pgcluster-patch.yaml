@@ -1,0 +1,19 @@
+kind: Cluster
+apiVersion: postgresql.cnpg.io/v1
+metadata:
+  name: streamsage-db
+spec:
+  instances: 2
+  storage:
+    size: 20Gi
+    storageClass: ibmc-vpc-block-metro-10iops-tier
+  walStorage:
+    size: 5Gi
+    storageClass: ibmc-vpc-block-metro-10iops-tier
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1"

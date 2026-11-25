@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamsage-console
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: console
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          env:
+            - name: ENVIRONMENT
+              value: "qa"
+            - name: API_URL
+              value: "http://api-gateway.streamsage-qa.svc.cluster.local:8000"
+            - name: LOG_LEVEL
+              value: "info"
+
+# Made with Bob

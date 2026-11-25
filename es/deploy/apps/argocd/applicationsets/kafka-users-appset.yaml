@@ -1,0 +1,72 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Purpose: ArgoCD ApplicationSet for Kafka Users automated deployment
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kafka-users
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        revision: HEAD
+        directories:
+          - path: deploy/apps/overlays/*/kafka-users
+          - path: deploy/apps/overlays/test/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/qa/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/staging/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/eem/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/ep/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/perf/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/prod/kafka-users
+            exclude: true
+          - path: deploy/apps/overlays/dr/kafka-users
+            exclude: true
+  template:
+    metadata:
+      name: '{{index .path.segments 3}}-kafka-users'
+      labels:
+        environment: '{{index .path.segments 3}}'
+        component: kafka-users
+        managed-by: argocd
+        app.kubernetes.io/part-of: streamsage
+    spec:
+      project: default
+      source:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        targetRevision: HEAD
+        path: 'deploy/apps/overlays/{{index .path.segments 3}}/kafka-users'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'kafka-{{index .path.segments 3}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=false
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: eventstreams.ibm.com
+          kind: KafkaUser
+          jsonPointers:
+            - /status

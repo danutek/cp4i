@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for EP Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-ep
+  namespace: openshift-gitops
+  labels:
+    environment: ep
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Enterprise Production - High-scale production
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-ep'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-ep'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: ep-admin
+      description: Full access to ep environment
+      policies:
+        - p, proj:streamsage-ep:ep-admin, applications, *, streamsage-ep/*, allow
+        - p, proj:streamsage-ep:ep-admin, applications, sync, streamsage-ep/*, allow
+        - p, proj:streamsage-ep:ep-admin, applications, override, streamsage-ep/*, allow
+        - p, proj:streamsage-ep:ep-admin, applications, action/*, streamsage-ep/*, allow
+      groups:
+        - streamsage-ep-admins
+        - platform-engineers
+
+    - name: ep-viewer
+      description: Read-only access to ep environment
+      policies:
+        - p, proj:streamsage-ep:ep-viewer, applications, get, streamsage-ep/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,191 @@
+# kafka-{env} namespaces — Event Streams, Kafka Connect, Bridge, MirrorMaker2, monitoring
+# One Namespace per environment, 9 environments total.
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-dev
+  labels:
+    kubernetes.io/metadata.name: kafka-dev
+    environment: dev
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (dev)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — dev environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-test
+  labels:
+    kubernetes.io/metadata.name: kafka-test
+    environment: test
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (test)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — test environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-qa
+  labels:
+    kubernetes.io/metadata.name: kafka-qa
+    environment: qa
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (qa)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — qa environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-staging
+  labels:
+    kubernetes.io/metadata.name: kafka-staging
+    environment: staging
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (staging)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — staging environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-perf
+  labels:
+    kubernetes.io/metadata.name: kafka-perf
+    environment: perf
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (perf)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — performance environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-prod
+  labels:
+    kubernetes.io/metadata.name: kafka-prod
+    environment: prod
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (prod)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — production environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-ep
+  labels:
+    kubernetes.io/metadata.name: kafka-ep
+    environment: ep
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (ep)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — ep environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-eem
+  labels:
+    kubernetes.io/metadata.name: kafka-eem
+    environment: eem
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (eem)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — EEM environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kafka-dr
+  labels:
+    kubernetes.io/metadata.name: kafka-dr
+    environment: dr
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — Kafka (dr)"
+    openshift.io/description: "IBM Event Streams and supporting Kafka workloads — disaster recovery environment"
+spec:
+  finalizers:
+    - kubernetes

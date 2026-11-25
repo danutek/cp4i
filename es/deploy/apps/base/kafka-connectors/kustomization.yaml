@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - streamsage.ingest.transaction-connector.yaml
+  - streamsage.transaction.event-connector.yaml
+  - streamsage.transaction.family.event-connector.yaml
+  - streamsage.workflow.event-connector.yaml
+  - streamsage.approval.event-connector.yaml
+  - streamsage.attachment.event-connector.yaml
+  - streamsage.notification.event-connector.yaml
+  - streamsage.audit.event-connector.yaml
+  - streamsage.ai.event-connector.yaml
+
+# IMPORTANT: Connector config values (connection.url, connection.user, connection.password)
+# must be overridden in environment overlays. Never commit credentials to base.
+# Use patches or environment-specific configMapGenerator/secretGenerator.
+
+commonLabels:
+  app.kubernetes.io/name: kafka-connectors
+  app.kubernetes.io/part-of: streamsage
+  app.kubernetes.io/component: kafka-connectors

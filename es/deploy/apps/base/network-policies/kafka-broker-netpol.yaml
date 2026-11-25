@@ -1,0 +1,148 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: NetworkPolicy for Kafka broker isolation and security
+#
+# IBM Event Streams v13 pods use eventstreams.ibm.com/ labels, not strimzi.io/.
+# Actual pod labels (confirmed from live cluster):
+#   eventstreams.ibm.com/kind=Kafka
+#   eventstreams.ibm.com/cluster=es
+#   eventstreams.ibm.com/component-type=kafka
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-broker-policy
+  labels:
+    app.kubernetes.io/component: kafka-broker
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      eventstreams.ibm.com/kind: Kafka
+      eventstreams.ibm.com/cluster: es
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow inter-broker communication (replication + KRaft controller port)
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+              eventstreams.ibm.com/cluster: es
+      ports:
+        - protocol: TCP
+          port: 9090  # KRaft controller-to-controller
+        - protocol: TCP
+          port: 9091  # Replication (internal TLS)
+        - protocol: TCP
+          port: 9093  # Internal TLS listener
+        - protocol: TCP
+          port: 9094  # External (if used)
+        - protocol: TCP
+          port: 8443  # Kafka agent HTTPS
+
+    # Allow from Kafka Connect
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaConnect
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+
+    # Allow from StreamSage services (ingest-service, outbox-publisher, etc.)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+
+    # Allow from Kafka Bridge
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaBridge
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+
+    # Allow from monitoring (Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 9404  # JMX Prometheus exporter
+
+    # Allow from ibm-eventstreams operator namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ibm-eventstreams
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9091
+        - protocol: TCP
+          port: 8443
+
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # Allow inter-broker communication (replication + KRaft controller port)
+    - to:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+              eventstreams.ibm.com/cluster: es
+      ports:
+        - protocol: TCP
+          port: 9090  # KRaft controller-to-controller
+        - protocol: TCP
+          port: 9091  # Replication
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9094
+        - protocol: TCP
+          port: 8443  # Kafka agent HTTPS
+
+    # Allow to operator namespace (operator manages broker config secrets)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ibm-eventstreams
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # Allow to Kubernetes API (Secret/ConfigMap reads via config provider)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443

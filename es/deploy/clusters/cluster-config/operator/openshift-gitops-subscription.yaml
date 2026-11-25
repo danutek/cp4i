@@ -1,0 +1,17 @@
+# OpenShift GitOps (ArgoCD) Operator Subscription
+# Installs the OpenShift GitOps operator via OLM.
+# This must be applied before any ArgoCD Applications or ApplicationSets.
+# The operator creates the openshift-gitops namespace and ArgoCD instance automatically.
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-operators
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  channel: latest
+  name: openshift-gitops-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic

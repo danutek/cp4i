@@ -1,0 +1,53 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Purpose: ArgoCD ApplicationSet for MirrorMaker2 — DR environment only
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: mirrormaker2
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  # List generator — no active environments (DR not yet deployed)
+  # To activate: add {env: dr} back to elements when DR environment is provisioned
+  generators:
+    - list:
+        elements: []
+  template:
+    metadata:
+      name: 'dr-mirrormaker2'
+      labels:
+        environment: dr
+        component: mirrormaker2
+        managed-by: argocd
+        app.kubernetes.io/part-of: streamsage
+    spec:
+      project: default
+      source:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        targetRevision: HEAD
+        path: deploy/apps/overlays/dr/mm2
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: kafka-dr
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=false
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: eventstreams.ibm.com
+          kind: KafkaMirrorMaker2
+          jsonPointers:
+            - /status

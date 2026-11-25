@@ -1,0 +1,24 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaConnect
+metadata:
+  name: kafka-connect
+  annotations:
+    eventstreams.ibm.com/use-connector-resources: "true"
+spec:
+  replicas: 1
+  bootstrapServers: kafka-es-kafka-bootstrap.kafka-dr.svc:9093
+  config:
+    group.id: kafka-connect-dr
+    offset.storage.topic: connect-offsets-dr
+    config.storage.topic: connect-configs-dr
+    status.storage.topic: connect-status-dr
+    offset.storage.replication.factor: 3
+    config.storage.replication.factor: 3
+    status.storage.replication.factor: 3
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi

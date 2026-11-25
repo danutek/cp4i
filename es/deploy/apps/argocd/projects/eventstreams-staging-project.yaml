@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for STAGING Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-staging
+  namespace: openshift-gitops
+  labels:
+    environment: staging
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Staging - Pre-production validation
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-staging'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: staging-admin
+      description: Full access to staging Event Streams
+      policies:
+        - p, proj:eventstreams-staging:staging-admin, applications, *, eventstreams-staging/*, allow
+        - p, proj:eventstreams-staging:staging-admin, applications, sync, eventstreams-staging/*, allow
+        - p, proj:eventstreams-staging:staging-admin, applications, override, eventstreams-staging/*, allow
+        - p, proj:eventstreams-staging:staging-admin, applications, action/*, eventstreams-staging/*, allow
+      groups:
+        - eventstreams-staging-admins
+        - platform-engineers
+
+    - name: staging-viewer
+      description: Read-only access to staging Event Streams
+      policies:
+        - p, proj:eventstreams-staging:staging-viewer, applications, get, eventstreams-staging/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 8-17 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

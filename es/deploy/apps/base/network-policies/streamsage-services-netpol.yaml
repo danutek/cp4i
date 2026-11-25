@@ -1,0 +1,116 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: NetworkPolicy for StreamSage services (ingest-service, outbox-publisher, api-gateway, etc.)
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: streamsage-services-policy
+  labels:
+    app.kubernetes.io/component: streamsage-services
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: streamsage
+      app.kubernetes.io/component: service
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from StreamSage Console
+    - from:
+        - podSelector:
+            matchLabels:
+              app: streamsage-console
+      ports:
+        - protocol: TCP
+          port: 8000  # API Gateway
+    
+    # Allow from other StreamSage services
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8080
+    
+    # Allow from monitoring (Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8080
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow to Kafka brokers
+    - to:
+        - podSelector:
+            matchLabels:
+              strimzi.io/kind: Kafka
+      ports:
+        - protocol: TCP
+          port: 9093  # Internal TLS
+        - protocol: TCP
+          port: 9092  # Internal plaintext
+    
+    # Allow to PostgreSQL
+    - to:
+        - namespaceSelector: {}
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # Allow to Redis (if used)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # Allow to other StreamSage services
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8080
+    
+    # Allow to external services (LLM APIs, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 80    # HTTP
+
+

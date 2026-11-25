@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for STAGING Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-staging
+  namespace: openshift-gitops
+  labels:
+    environment: staging
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Staging - Pre-production validation
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-staging'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-staging'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: staging-admin
+      description: Full access to staging environment
+      policies:
+        - p, proj:streamsage-staging:staging-admin, applications, *, streamsage-staging/*, allow
+        - p, proj:streamsage-staging:staging-admin, applications, sync, streamsage-staging/*, allow
+        - p, proj:streamsage-staging:staging-admin, applications, override, streamsage-staging/*, allow
+        - p, proj:streamsage-staging:staging-admin, applications, action/*, streamsage-staging/*, allow
+      groups:
+        - streamsage-staging-admins
+        - platform-engineers
+
+    - name: staging-viewer
+      description: Read-only access to staging environment
+      policies:
+        - p, proj:streamsage-staging:staging-viewer, applications, get, streamsage-staging/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 8-17 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

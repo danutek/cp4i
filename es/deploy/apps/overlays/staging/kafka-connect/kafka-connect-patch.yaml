@@ -1,0 +1,33 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaConnect
+metadata:
+  name: kafka-connect
+  annotations:
+    eventstreams.ibm.com/use-connector-resources: "true"
+spec:
+  template:
+    pod:
+      metadata:
+        annotations:
+          eventstreams.production.type: CloudPakForIntegration
+          productID: 2a79e49111f44ec3acd89608e56138f5
+          productName: IBM Event Streams
+  replicas: 3
+  bootstrapServers: kafka-es-kafka-bootstrap.kafka-staging.svc:9093
+  config:
+    group.id: kafka-connect-staging
+    offset.storage.topic: connect-offsets-staging
+    config.storage.topic: connect-configs-staging
+    status.storage.topic: connect-status-staging
+    offset.storage.replication.factor: 3
+    config.storage.replication.factor: 3
+    status.storage.replication.factor: 3
+  resources:
+    requests:
+      memory: 4Gi
+      cpu: "1"
+    limits:
+      memory: 8Gi
+      cpu: "2"
+
+# Made with Bob

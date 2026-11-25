@@ -1,0 +1,18 @@
+# deploy/apps/overlays/prod/kustomization.yaml
+#
+# This file is intentionally not a Kustomization resource entry point.
+# The prod environment uses per-component subdirectories, each with their own
+# kustomization.yaml. ArgoCD ApplicationSets discover each component separately:
+#
+#   prod/event-streams/       ← managed by event-streams-appset.yaml
+#   prod/kafka-connect/       ← managed by kafka-connect-appset.yaml
+#   prod/kafka-topics/        ← managed by kafka-topics-appset.yaml
+#   prod/kafka-users/         ← managed by kafka-users-appset.yaml
+#   prod/kafka-bridge/        ← managed by kafka-bridge-appset.yaml
+#   prod/monitoring/          ← managed by kafka-monitoring-appset.yaml
+#   prod/network-policies/    ← managed by network-policies-appset.yaml
+#   prod/streamsage-services/ ← managed by streamsage-services-appset.yaml
+#   prod/streamsage-console/  ← managed by streamsage-console-appset.yaml
+#
+# To validate a single component locally:
+#   oc kustomize deploy/apps/overlays/prod/event-streams

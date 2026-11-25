@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kafka-dev
+
+resources:
+  - ../../../base/network-policies
+
+labels:
+  - pairs:
+      environment: dev
+      app.kubernetes.io/instance: network-policies-dev
+      app.kubernetes.io/part-of: streamsage
+    includeSelectors: false
+
+patches:
+  # Override the podSelector on kafka-broker-policy so it uses only the labels
+  # IBM Event Streams v13 actually puts on broker pods (eventstreams.ibm.com/*).
+  # kustomize commonLabels bleeds into podSelector.matchLabels, adding labels the
+  # broker pods don't carry — this patch resets the full policy spec cleanly.
+  - path: kafka-broker-netpol-patch.yaml
+    target:
+      kind: NetworkPolicy
+      name: kafka-broker-policy
+
+

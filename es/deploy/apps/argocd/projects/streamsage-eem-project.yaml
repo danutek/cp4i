@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for EEM Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-eem
+  namespace: openshift-gitops
+  labels:
+    environment: eem
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Enterprise Event Management - Event monitoring
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-eem'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-eem'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: eem-admin
+      description: Full access to eem environment
+      policies:
+        - p, proj:streamsage-eem:eem-admin, applications, *, streamsage-eem/*, allow
+        - p, proj:streamsage-eem:eem-admin, applications, sync, streamsage-eem/*, allow
+        - p, proj:streamsage-eem:eem-admin, applications, override, streamsage-eem/*, allow
+        - p, proj:streamsage-eem:eem-admin, applications, action/*, streamsage-eem/*, allow
+      groups:
+        - streamsage-eem-admins
+        - platform-engineers
+
+    - name: eem-viewer
+      description: Read-only access to eem environment
+      policies:
+        - p, proj:streamsage-eem:eem-viewer, applications, get, streamsage-eem/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-18 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for DR Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-dr
+  namespace: openshift-gitops
+  labels:
+    environment: dr
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Disaster Recovery - Business continuity
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-dr'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-dr'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: dr-admin
+      description: Full access to dr environment
+      policies:
+        - p, proj:streamsage-dr:dr-admin, applications, *, streamsage-dr/*, allow
+        - p, proj:streamsage-dr:dr-admin, applications, sync, streamsage-dr/*, allow
+        - p, proj:streamsage-dr:dr-admin, applications, override, streamsage-dr/*, allow
+        - p, proj:streamsage-dr:dr-admin, applications, action/*, streamsage-dr/*, allow
+      groups:
+        - streamsage-dr-admins
+        - platform-engineers
+
+    - name: dr-viewer
+      description: Read-only access to dr environment
+      policies:
+        - p, proj:streamsage-dr:dr-viewer, applications, get, streamsage-dr/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0,3'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

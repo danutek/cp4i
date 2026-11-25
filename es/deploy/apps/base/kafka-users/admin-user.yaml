@@ -1,0 +1,43 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaUser
+metadata:
+  name: admin-user
+  labels:
+    eventstreams.ibm.com/cluster: kafka-es
+    backup.eventstreams.ibm.com/component: kafkauser
+    app.kubernetes.io/part-of: streamsage
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: '*'
+          patternType: literal
+        operations:
+          - Read
+          - Write
+          - Create
+          - Delete
+          - Describe
+          - DescribeConfigs
+          - Alter
+          - AlterConfigs
+      - resource:
+          type: group
+          name: '*'
+          patternType: literal
+        operations:
+          - Read
+          - Describe
+      - resource:
+          type: cluster
+        operations:
+          - Describe
+          - DescribeConfigs
+          - Alter
+          - AlterConfigs
+          - IdempotentWrite
+          - ClusterAction

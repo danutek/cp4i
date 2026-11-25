@@ -1,0 +1,103 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-broker-policy
+spec:
+  podSelector:
+    $patch: replace
+    matchLabels:
+      eventstreams.ibm.com/kind: Kafka
+      eventstreams.ibm.com/cluster: es
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+              eventstreams.ibm.com/cluster: es
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9091
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9094
+        - protocol: TCP
+          port: 8443
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaConnect
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+    - from:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: KafkaBridge
+      ports:
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9092
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 9404
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ibm-eventstreams
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9091
+        - protocol: TCP
+          port: 8443
+  egress:
+    # Allow DNS to CoreDNS ClusterIP (172.21.0.10) — NamespaceSelector doesn't
+    # cover ClusterIP services, so allow port 53 to any destination
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              eventstreams.ibm.com/kind: Kafka
+              eventstreams.ibm.com/cluster: es
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9091
+        - protocol: TCP
+          port: 9093
+        - protocol: TCP
+          port: 9094
+        - protocol: TCP
+          port: 8443
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443

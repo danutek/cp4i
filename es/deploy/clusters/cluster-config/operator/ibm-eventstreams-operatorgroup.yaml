@@ -1,0 +1,14 @@
+# OperatorGroup for IBM Event Streams
+# IBM Event Streams operator watches all namespaces so that a single operator
+# installation can manage EventStreams CRs in any kafka-{env} namespace.
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: ibm-eventstreams-operatorgroup
+  namespace: ibm-eventstreams
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  upgradeStrategy: Default
+  # AllNamespaces: operator pod lives in ibm-eventstreams, watches all namespaces
+  # Leave targetNamespaces empty for AllNamespaces scope

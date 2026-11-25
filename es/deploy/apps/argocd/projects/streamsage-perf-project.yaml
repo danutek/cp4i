@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for PERF Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-perf
+  namespace: openshift-gitops
+  labels:
+    environment: perf
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Performance - Load and performance testing
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-perf'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-perf'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: perf-admin
+      description: Full access to perf environment
+      policies:
+        - p, proj:streamsage-perf:perf-admin, applications, *, streamsage-perf/*, allow
+        - p, proj:streamsage-perf:perf-admin, applications, sync, streamsage-perf/*, allow
+        - p, proj:streamsage-perf:perf-admin, applications, override, streamsage-perf/*, allow
+        - p, proj:streamsage-perf:perf-admin, applications, action/*, streamsage-perf/*, allow
+      groups:
+        - streamsage-perf-admins
+        - platform-engineers
+
+    - name: perf-viewer
+      description: Read-only access to perf environment
+      policies:
+        - p, proj:streamsage-perf:perf-viewer, applications, get, streamsage-perf/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-22 * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

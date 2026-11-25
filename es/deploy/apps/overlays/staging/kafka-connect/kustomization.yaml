@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kafka-staging
+
+bases:
+  - ../../../base/kafka-connect
+
+patches:
+  - path: kafka-connect-patch.yaml
+
+commonLabels:
+  environment: staging
+  app.kubernetes.io/instance: kafka-connect-staging
+  app.kubernetes.io/part-of: streamsage
+
+# Made with Bob

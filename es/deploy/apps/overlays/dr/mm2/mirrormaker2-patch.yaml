@@ -1,0 +1,10 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaMirrorMaker2
+metadata:
+  name: kafka-mm2
+spec:
+  clusters:
+    - alias: source-cluster
+      # Production Event Streams external bootstrap route
+      # Update this value to match the actual prod cluster external route
+      bootstrapServers: kafka-es-kafka-bootstrap-kafka-prod.apps.REPLACE_WITH_PROD_CLUSTER_DOMAIN:443

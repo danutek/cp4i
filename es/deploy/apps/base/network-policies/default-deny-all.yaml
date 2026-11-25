@@ -1,0 +1,21 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: Default deny-all NetworkPolicy for zero-trust security
+
+---
+# Default deny all ingress and egress traffic
+# This ensures that only explicitly allowed traffic is permitted
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  labels:
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+

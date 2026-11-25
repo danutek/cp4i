@@ -1,0 +1,81 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: NetworkPolicy for StreamSage Console web application
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: streamsage-console-policy
+  labels:
+    app.kubernetes.io/component: streamsage-console
+    app.kubernetes.io/part-of: streamsage
+spec:
+  podSelector:
+    matchLabels:
+      app: streamsage-console
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from OpenShift Router/Ingress
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-ingress
+      ports:
+        - protocol: TCP
+          port: 3000  # Next.js default port
+    
+    # Allow from monitoring (Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: openshift-monitoring
+      ports:
+        - protocol: TCP
+          port: 3000
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow to API Gateway
+    - to:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8000
+    
+    # Allow to StreamSage services
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: streamsage
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8080
+    
+    # Allow to external services (CDN, analytics, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 80    # HTTP
+
+

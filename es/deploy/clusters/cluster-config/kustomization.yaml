@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Top-level cluster-config kustomization.
+# Applied by the cluster-config ArgoCD ApplicationSet.
+# Delegates to sub-kustomizations — each subdirectory owns its own resource list.
+resources:
+  - catalogs/
+  - namespaces/base/
+  - operator/
+  - rbac/argocd-cnpg-rbac.yaml
+  - rbac/argocd-namespace-admin.yaml
+  - rbac/argocd-eventstreams-rbac.yaml

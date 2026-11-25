@@ -1,0 +1,116 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Purpose: POC ApplicationSet — dev environment only, minimal stack.
+#
+# Deploys exactly:
+#   1. event-streams       → kafka-dev
+#   2. kafka-topics        → kafka-dev
+#   3. kafka-users         → kafka-dev
+#   4. postgres            → postgres-dev
+#   5. streamsage-services → streamsage-dev
+#   6. streamsage-console  → streamsage-dev
+#
+# Deliberately omits: network-policies, kafka-connect, kafka-bridge,
+#   kafka-monitoring, mirrormaker2.
+#
+# To extend to another environment, add another set of elements to each
+# component block (e.g. - env: test  component: event-streams  destNamespace: kafka-test)
+# and ensure the corresponding deploy/apps/overlays/{env}/ directories exist.
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: dev-poc
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: streamsage
+    app.kubernetes.io/managed-by: argocd
+    streamsage.io/appset-role: poc
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+
+  # ── Generator list ───────────────────────────────────────────────────────────
+  # Each element produces one ArgoCD Application.
+  # env        — overlay directory name under deploy/apps/overlays/
+  # component  — subdirectory name within that overlay
+  # destNamespace — target namespace on the cluster
+  generators:
+    - list:
+        elements:
+          # ── IBM Event Streams ──────────────────────────────────────────────
+          - env: dev
+            component: event-streams
+            destNamespace: kafka-dev
+          # ── Kafka Topics ───────────────────────────────────────────────────
+          - env: dev
+            component: kafka-topics
+            destNamespace: kafka-dev
+          # ── Kafka Users ────────────────────────────────────────────────────
+          - env: dev
+            component: kafka-users
+            destNamespace: kafka-dev
+          # ── PostgreSQL (CloudNativePG) ─────────────────────────────────────
+          - env: dev
+            component: postgres
+            destNamespace: postgres-dev
+          # ── StreamSage backend services ────────────────────────────────────
+          - env: dev
+            component: streamsage-services
+            destNamespace: streamsage-dev
+          # ── StreamSage web console ─────────────────────────────────────────
+          - env: dev
+            component: streamsage-console
+            destNamespace: streamsage-dev
+
+  template:
+    metadata:
+      name: 'poc-{{.env}}-{{.component}}'
+      labels:
+        environment: '{{.env}}'
+        component: '{{.component}}'
+        managed-by: argocd
+        app.kubernetes.io/part-of: streamsage
+        streamsage.io/appset-role: poc
+    spec:
+      project: default
+      source:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        targetRevision: HEAD
+        path: 'deploy/apps/overlays/{{.env}}/{{.component}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.destNamespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m
+      ignoreDifferences:
+        # EventStreams operator writes to .status continuously — ignore drift
+        - group: eventstreams.ibm.com
+          kind: EventStreams
+          jsonPointers:
+            - /status
+        - group: eventstreams.ibm.com
+          kind: KafkaTopic
+          jsonPointers:
+            - /status
+        - group: eventstreams.ibm.com
+          kind: KafkaUser
+          jsonPointers:
+            - /status
+        # CloudNativePG writes to .status continuously — ignore drift
+        - group: postgresql.cnpg.io
+          kind: Cluster
+          jsonPointers:
+            - /status

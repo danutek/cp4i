@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for EEM Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-eem
+  namespace: openshift-gitops
+  labels:
+    environment: eem
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Enterprise Event Management - Event monitoring
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-eem'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: eem-admin
+      description: Full access to eem Event Streams
+      policies:
+        - p, proj:eventstreams-eem:eem-admin, applications, *, eventstreams-eem/*, allow
+        - p, proj:eventstreams-eem:eem-admin, applications, sync, eventstreams-eem/*, allow
+        - p, proj:eventstreams-eem:eem-admin, applications, override, eventstreams-eem/*, allow
+        - p, proj:eventstreams-eem:eem-admin, applications, action/*, eventstreams-eem/*, allow
+      groups:
+        - eventstreams-eem-admins
+        - platform-engineers
+
+    - name: eem-viewer
+      description: Read-only access to eem Event Streams
+      policies:
+        - p, proj:eventstreams-eem:eem-viewer, applications, get, eventstreams-eem/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-18 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

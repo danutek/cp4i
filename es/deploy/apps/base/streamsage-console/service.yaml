@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamsage-console
+  labels:
+    app.kubernetes.io/name: streamsage-console
+spec:
+  selector:
+    app.kubernetes.io/name: streamsage-console
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

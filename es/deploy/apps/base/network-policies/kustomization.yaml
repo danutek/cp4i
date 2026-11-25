@@ -1,0 +1,23 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: Kustomization for NetworkPolicies - Zero-trust network security
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - default-deny-all.yaml
+  - kafka-broker-netpol.yaml
+  - kafka-connect-netpol.yaml
+  - kafka-bridge-netpol.yaml
+  - mirrormaker2-netpol.yaml
+  - grafana-netpol.yaml
+  - streamsage-services-netpol.yaml
+  - streamsage-console-netpol.yaml
+  - postgres-netpol.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: streamsage
+  app.kubernetes.io/component: network-security
+
+

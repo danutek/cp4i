@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for EP Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-ep
+  namespace: openshift-gitops
+  labels:
+    environment: ep
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Enterprise Production - High-scale production
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-ep'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: ep-admin
+      description: Full access to ep Event Streams
+      policies:
+        - p, proj:eventstreams-ep:ep-admin, applications, *, eventstreams-ep/*, allow
+        - p, proj:eventstreams-ep:ep-admin, applications, sync, eventstreams-ep/*, allow
+        - p, proj:eventstreams-ep:ep-admin, applications, override, eventstreams-ep/*, allow
+        - p, proj:eventstreams-ep:ep-admin, applications, action/*, eventstreams-ep/*, allow
+      groups:
+        - eventstreams-ep-admins
+        - platform-engineers
+
+    - name: ep-viewer
+      description: Read-only access to ep Event Streams
+      policies:
+        - p, proj:eventstreams-ep:ep-viewer, applications, get, eventstreams-ep/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

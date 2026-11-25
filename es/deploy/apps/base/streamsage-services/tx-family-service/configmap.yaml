@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tx-family-service-config
+  labels:
+    app: tx-family-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  SERVICE_NAME: "tx-family-service"
+  LOG_LEVEL: "INFO"
+  DB_HOST: "streamsage-db-rw.postgres-dev.svc"
+  DB_PORT: "5432"
+  DB_NAME: "streamsage"
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-es-kafka-bootstrap.kafka-dev.svc:9092"
+  KAFKA_TOPIC: "streamsage.transaction.event"
+  KAFKA_GROUP_ID: "tx-family-service-group"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"

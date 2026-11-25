@@ -1,0 +1,24 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaConnect
+metadata:
+  name: kafka-connect
+spec:
+  replicas: 2
+  bootstrapServers: kafka-es-kafka-bootstrap:9093
+  config:
+    group.id: streamsage-connect-cluster
+    offset.storage.topic: streamsage-connect-offsets
+    config.storage.topic: streamsage-connect-configs
+    status.storage.topic: streamsage-connect-status
+    config.storage.replication.factor: 3
+    offset.storage.replication.factor: 3
+    status.storage.replication.factor: 3
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: "500m"
+    limits:
+      memory: 4Gi
+      cpu: "1"
+
+

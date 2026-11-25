@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - streamsage.ingest.transaction-topic.yaml
+  - streamsage.transaction.event-topic.yaml
+  - streamsage.transaction.family.event-topic.yaml
+  - streamsage.workflow.event-topic.yaml
+  - streamsage.approval.event-topic.yaml
+  - streamsage.attachment.event-topic.yaml
+  - streamsage.notification.event-topic.yaml
+  - streamsage.audit.event-topic.yaml
+  - streamsage.ai.event-topic.yaml
+  - streamsage.deadletter-topic.yaml
+
+# sample-topic.yaml is intentionally excluded from base.
+# Add it to individual environment overlays where test topics are needed (e.g. dev).
+
+commonLabels:
+  app.kubernetes.io/name: kafka-topics
+  app.kubernetes.io/part-of: streamsage
+  app.kubernetes.io/component: kafka-topics

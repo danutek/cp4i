@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kafka-test
+
+bases:
+  - ../../../base/kafka-topics
+
+commonLabels:
+  environment: test
+  app.kubernetes.io/instance: kafka-topics-test
+  app.kubernetes.io/part-of: streamsage

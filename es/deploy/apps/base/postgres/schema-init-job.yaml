@@ -1,0 +1,141 @@
+# StreamSage PostgreSQL Schema Initialization Job
+# Runs all DDL migrations in dependency order on first cluster boot.
+# The Job uses initdb-style sequencing: core → family → ai.
+#
+# Prerequisites:
+#   - CloudNativePG Cluster "postgres-cluster" must be healthy before this Job runs
+#   - Secret "streamsage-db-app" (created by CloudNativePG) must exist
+#   - ConfigMap "streamsage-ddl" must exist (created separately with the SQL files)
+#
+# This Job is idempotent: all DDL scripts use CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: streamsage-schema-init
+  labels:
+    app: streamsage-schema-init
+    app.kubernetes.io/part-of: streamsage
+  annotations:
+    # Ensure this Job runs after the PostgreSQL cluster is ready via ArgoCD sync waves
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  # Retry up to 3 times if the cluster is not yet ready
+  backoffLimit: 3
+  # Clean up completed Job pods after 1 hour
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: schema-init
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for PostgreSQL to be ready..."
+              until psql -c "SELECT 1" > /dev/null 2>&1; do
+                echo "  waiting..."
+                sleep 5
+              done
+              echo "PostgreSQL ready. Running schema migrations..."
+
+              echo "Phase 1: Core schema"
+              for f in /ddl/core/01_core_tables.sql \
+                        /ddl/core/02_flexible_attributes.sql \
+                        /ddl/core/03_relationships.sql \
+                        /ddl/core/04_attachments.sql \
+                        /ddl/core/05_audit_logging.sql \
+                        /ddl/core/06_workflow_engine.sql \
+                        /ddl/core/07_user_security.sql \
+                        /ddl/core/08_notifications_config.sql \
+                        /ddl/core/09_views.sql \
+                        /ddl/core/10_reference_data.sql \
+                        /ddl/core/11_outbox.sql \
+                        /ddl/core/12_add_ingest_message_id.sql; do
+                echo "  → $(basename $f)"
+                psql -v ON_ERROR_STOP=1 -f "$f"
+              done
+
+              echo "Phase 2: Family schema"
+              for f in /ddl/family/001_family.sql \
+                        /ddl/family/002_family_member.sql \
+                        /ddl/family/003_family_rule.sql \
+                        /ddl/family/004_family_history.sql \
+                        /ddl/family/005_family_indexes.sql; do
+                echo "  → $(basename $f)"
+                psql -v ON_ERROR_STOP=1 -f "$f"
+              done
+
+              echo "Phase 3: AI schema"
+              for f in /ddl/ai/001_ai_model_registry.sql \
+                        /ddl/ai/002_ai_output_schema.sql \
+                        /ddl/ai/003_ai_prompt_template.sql \
+                        /ddl/ai/004_ai_policy_rule.sql \
+                        /ddl/ai/005_ai_analysis_request.sql \
+                        /ddl/ai/006_ai_context_snapshot.sql \
+                        /ddl/ai/007_ai_retrieval_context.sql \
+                        /ddl/ai/008_ai_observation.sql \
+                        /ddl/ai/009_ai_recommendation.sql \
+                        /ddl/ai/010_ai_recommendation_action.sql \
+                        /ddl/ai/011_ai_review_decision.sql \
+                        /ddl/ai/012_ai_action_execution.sql \
+                        /ddl/ai/013_ai_feedback_signal.sql \
+                        /ddl/ai/014_ai_indexes.sql; do
+                echo "  → $(basename $f)"
+                psql -v ON_ERROR_STOP=1 -f "$f"
+              done
+
+              echo "Schema initialization complete."
+          env:
+            - name: PGHOST
+              value: "streamsage-db-rw"
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: "streamsage"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: streamsage-db-superuser
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: streamsage-db-superuser
+                  key: password
+          volumeMounts:
+            - name: ddl-core
+              mountPath: /ddl/core
+              readOnly: true
+            - name: ddl-family
+              mountPath: /ddl/family
+              readOnly: true
+            - name: ddl-ai
+              mountPath: /ddl/ai
+              readOnly: true
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      volumes:
+        - name: ddl-core
+          configMap:
+            name: streamsage-ddl-core
+        - name: ddl-family
+          configMap:
+            name: streamsage-ddl-family
+        - name: ddl-ai
+          configMap:
+            name: streamsage-ddl-ai

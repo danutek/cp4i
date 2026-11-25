@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: transaction-service-config
+  labels:
+    app: transaction-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-es-kafka-bootstrap.kafka-dev.svc:9092"
+  KAFKA_TOPIC: "streamsage.transaction.event"
+  KAFKA_GROUP_ID: "streamsage-transaction-py"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"
+  LOG_LEVEL: "INFO"

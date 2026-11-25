@@ -1,0 +1,26 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaConnector
+metadata:
+  labels:
+    eventstreams.ibm.com/cluster: kc
+  name: streamsage.attachment.event-sink
+  namespace: kafka
+spec:
+  class: io.aiven.connect.jdbc.JdbcSinkConnector
+  config:
+    topics: streamsage.attachment.event
+    errors.tolerance: all
+    connection.password: REPLACE_WITH_SECRET
+    pk.fields: id
+    errors.log.enable: 'true'
+    pk.mode: record_value
+    insert.mode: upsert
+    table.name.format: streamsage.attachment_event
+    connection.user: app
+    auto.create: 'false'
+    auto.evolve: 'false'
+    connection.url: 'jdbc:postgresql://REPLACE_WITH_DB_HOST:5432/streamops'
+    errors.log.include.messages: 'true'
+  tasksMax: 1
+
+

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamsage-console
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: console
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "750m"
+            limits:
+              memory: "2Gi"
+              cpu: "1500m"
+          env:
+            - name: ENVIRONMENT
+              value: "eem"
+            - name: API_URL
+              value: "http://api-gateway.streamsage-eem.svc.cluster.local:8000"
+            - name: LOG_LEVEL
+              value: "info"

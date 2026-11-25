@@ -1,0 +1,5 @@
+resources:
+  - kafka-es.yaml
+
+commonLabels:
+  app.kubernetes.io/name: event-streams

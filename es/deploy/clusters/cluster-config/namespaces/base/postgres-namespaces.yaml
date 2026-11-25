@@ -1,0 +1,191 @@
+# postgres-{env} namespaces — CloudNativePG PostgreSQL clusters
+# One Namespace per environment, 9 environments total.
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-dev
+  labels:
+    kubernetes.io/metadata.name: postgres-dev
+    environment: dev
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (dev)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — dev environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-test
+  labels:
+    kubernetes.io/metadata.name: postgres-test
+    environment: test
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (test)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — test environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-qa
+  labels:
+    kubernetes.io/metadata.name: postgres-qa
+    environment: qa
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (qa)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — qa environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-staging
+  labels:
+    kubernetes.io/metadata.name: postgres-staging
+    environment: staging
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (staging)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — staging environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-perf
+  labels:
+    kubernetes.io/metadata.name: postgres-perf
+    environment: perf
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (perf)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — performance environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-prod
+  labels:
+    kubernetes.io/metadata.name: postgres-prod
+    environment: prod
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (prod)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — production environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-ep
+  labels:
+    kubernetes.io/metadata.name: postgres-ep
+    environment: ep
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (ep)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — ep environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-eem
+  labels:
+    kubernetes.io/metadata.name: postgres-eem
+    environment: eem
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (eem)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — EEM environment"
+spec:
+  finalizers:
+    - kubernetes
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-dr
+  labels:
+    kubernetes.io/metadata.name: postgres-dr
+    environment: dr
+    app.kubernetes.io/part-of: streamsage
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  annotations:
+    openshift.io/display-name: "StreamSage — PostgreSQL (dr)"
+    openshift.io/description: "CloudNativePG PostgreSQL clusters — disaster recovery environment"
+spec:
+  finalizers:
+    - kubernetes

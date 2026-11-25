@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notification-service-config
+  labels:
+    app: notification-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  SERVICE_NAME: "streamsage-notification-service"
+  LOG_LEVEL: "INFO"
+  SERVICE_HOST: "0.0.0.0"
+  SERVICE_PORT: "8000"
+  HEALTH_PORT: "8080"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-es-kafka-bootstrap.kafka-dev.svc:9092"
+  KAFKA_CONSUMER_GROUP_ID: "streamsage-notification-service"
+  KAFKA_CONSUMER_TOPIC: "streamsage.notification.requested"
+  KAFKA_PRODUCER_TOPIC_SENT: "streamsage.notification.sent"
+  KAFKA_PRODUCER_TOPIC_DELIVERED: "streamsage.notification.delivered"
+  KAFKA_PRODUCER_TOPIC_FAILED: "streamsage.notification.failed"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"
+  ENABLE_EMAIL: "true"
+  ENABLE_SMS: "true"

@@ -1,0 +1,84 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for TEST Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-test
+  namespace: openshift-gitops
+  labels:
+    environment: test
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Test - Automated testing environment
+
+  # Source repositories allowed for this project
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  # Destinations - where applications can be deployed
+  destinations:
+    # Kafka namespace
+    - namespace: 'kafka-test'
+      server: 'https://kubernetes.default.svc'
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Orphaned resources
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  # RBAC Roles
+  roles:
+    - name: test-admin
+      description: Full access to test Event Streams
+      policies:
+        - p, proj:eventstreams-test:test-admin, applications, *, eventstreams-test/*, allow
+        - p, proj:eventstreams-test:test-admin, applications, sync, eventstreams-test/*, allow
+        - p, proj:eventstreams-test:test-admin, applications, override, eventstreams-test/*, allow
+        - p, proj:eventstreams-test:test-admin, applications, action/*, eventstreams-test/*, allow
+      groups:
+        - eventstreams-test-admins
+        - platform-engineers
+
+    - name: test-viewer
+      description: Read-only access to test Event Streams
+      policies:
+        - p, proj:eventstreams-test:test-viewer, applications, get, eventstreams-test/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  # Sync windows
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for QA Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-qa
+  namespace: openshift-gitops
+  labels:
+    environment: qa
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams QA - Quality assurance and validation
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-qa'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: qa-admin
+      description: Full access to qa Event Streams
+      policies:
+        - p, proj:eventstreams-qa:qa-admin, applications, *, eventstreams-qa/*, allow
+        - p, proj:eventstreams-qa:qa-admin, applications, sync, eventstreams-qa/*, allow
+        - p, proj:eventstreams-qa:qa-admin, applications, override, eventstreams-qa/*, allow
+        - p, proj:eventstreams-qa:qa-admin, applications, action/*, eventstreams-qa/*, allow
+      groups:
+        - eventstreams-qa-admins
+        - platform-engineers
+
+    - name: qa-viewer
+      description: Read-only access to qa Event Streams
+      policies:
+        - p, proj:eventstreams-qa:qa-viewer, applications, get, eventstreams-qa/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-18 * * 1-5'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,19 @@
+# IBM Operator Catalog Source
+# Makes the IBM operator catalog available to OLM so that IBM Event Streams
+# and other IBM Cloud Pak for Integration operators can be installed.
+# This must be applied to the openshift-marketplace namespace.
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: ibm-operator-catalog
+  namespace: openshift-marketplace
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  displayName: IBM Operator Catalog
+  image: icr.io/cpopen/ibm-operator-catalog:latest
+  publisher: IBM
+  sourceType: grpc
+  updateStrategy:
+    registryPoll:
+      interval: 45m

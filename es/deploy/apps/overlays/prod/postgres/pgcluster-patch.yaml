@@ -1,0 +1,35 @@
+kind: Cluster
+apiVersion: postgresql.cnpg.io/v1
+metadata:
+  name: streamsage-postgres
+spec:
+  instances: 3
+  storage:
+    size: 200Gi
+  walStorage:
+    size: 50Gi
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "4"
+  # Continuous backup to object storage (configure backup policy per cluster)
+  backup:
+    retentionPolicy: "30d"
+    barmanObjectStore:
+      destinationPath: "s3://streamsage-backups/postgres/prod"
+      s3Credentials:
+        accessKeyId:
+          name: streamsage-postgres-backup-s3
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: streamsage-postgres-backup-s3
+          key: SECRET_ACCESS_KEY
+      wal:
+        compression: gzip
+      data:
+        compression: gzip
+        immediateCheckpoint: false
+        jobs: 2

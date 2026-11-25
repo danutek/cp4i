@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-monitor-config
+  labels:
+    app: event-monitor
+    app.kubernetes.io/part-of: streamsage
+data:
+  SERVICE_NAME: "event-monitor"
+  LOG_LEVEL: "INFO"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  DB_HOST: "streamsage-db-rw.postgres-dev.svc"
+  DB_PORT: "5432"
+  DB_NAME: "streamsage"
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  REFRESH_INTERVAL_SECONDS: "5"
+  MAX_EVENTS_DISPLAY: "100"

@@ -1,0 +1,85 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for TEST Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-test
+  namespace: openshift-gitops
+  labels:
+    environment: test
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Test - Automated testing environment
+
+  # Source repositories allowed for this project
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  # Destinations - where applications can be deployed
+  destinations:
+    # StreamSage services namespace
+    - namespace: 'streamsage-test'
+      server: 'https://kubernetes.default.svc'
+    # PostgreSQL namespace
+    - namespace: 'postgres-test'
+      server: 'https://kubernetes.default.svc'
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  # Orphaned resources
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  # RBAC Roles
+  roles:
+    - name: test-admin
+      description: Full access to test environment
+      policies:
+        - p, proj:streamsage-test:test-admin, applications, *, streamsage-test/*, allow
+        - p, proj:streamsage-test:test-admin, applications, sync, streamsage-test/*, allow
+        - p, proj:streamsage-test:test-admin, applications, override, streamsage-test/*, allow
+        - p, proj:streamsage-test:test-admin, applications, action/*, streamsage-test/*, allow
+      groups:
+        - streamsage-test-admins
+        - platform-engineers
+
+    - name: test-viewer
+      description: Read-only access to test environment
+      policies:
+        - p, proj:streamsage-test:test-viewer, applications, get, streamsage-test/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  # Sync windows
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,60 @@
+kind: Cluster
+apiVersion: postgresql.cnpg.io/v1
+metadata:
+  name: streamsage-db
+  # namespace is intentionally omitted — set by each overlay
+  labels:
+    app.kubernetes.io/name: streamsage-db
+    app.kubernetes.io/part-of: streamsage
+  annotations:
+    # Ensure the cluster is created before the schema-init Job (sync wave 5)
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  instances: 3
+  logLevel: info
+  primaryUpdateStrategy: unsupervised
+
+  # PostgreSQL configuration
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+      work_mem: "4MB"
+      maintenance_work_mem: "64MB"
+      effective_cache_size: "1GB"
+
+  # Bootstrap from initdb (first deploy only)
+  # CNPG auto-generates and fully manages:
+  #   streamsage-db-superuser  — superuser (postgres) credentials, random password
+  #   streamsage-db-app        — app user credentials (only if owner matches a managed role)
+  # Do NOT pre-create streamsage-db-superuser — CNPG owns that secret name.
+  bootstrap:
+    initdb:
+      database: streamsage
+      owner: streamsage
+
+  managed:
+    roles:
+      - name: streamsage
+        ensure: present
+        login: true
+        passwordSecret:
+          name: streamsage-db-app-credentials
+
+  storage:
+    size: 50Gi
+
+  walStorage:
+    size: 10Gi
+
+  # Monitoring via Prometheus PodMonitor (requires monitoring stack)
+  monitoring:
+    enablePodMonitor: true
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2"

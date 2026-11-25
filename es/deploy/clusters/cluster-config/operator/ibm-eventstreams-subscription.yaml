@@ -1,0 +1,18 @@
+# IBM Event Streams Operator Subscription
+# Installs the IBM Event Streams operator via OLM from the IBM operator catalog.
+# channel v3.x tracks the latest Event Streams 3.x release train (ES 11/12).
+# installPlanApproval: Manual — prevents automatic upgrades; a human approves each
+# InstallPlan so that operator upgrades are gated through the change-management process.
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-eventstreams
+  namespace: ibm-eventstreams
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  channel: v13.0
+  name: ibm-eventstreams
+  source: ibm-operator-catalog
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Manual

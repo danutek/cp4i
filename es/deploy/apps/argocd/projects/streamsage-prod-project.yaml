@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for PROD Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-prod
+  namespace: openshift-gitops
+  labels:
+    environment: prod
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Production - Live production environment
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'streamsage-prod'
+      server: 'https://kubernetes.default.svc'
+    - namespace: 'postgres-prod'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  roles:
+    - name: prod-admin
+      description: Full access to prod environment
+      policies:
+        - p, proj:streamsage-prod:prod-admin, applications, *, streamsage-prod/*, allow
+        - p, proj:streamsage-prod:prod-admin, applications, sync, streamsage-prod/*, allow
+        - p, proj:streamsage-prod:prod-admin, applications, override, streamsage-prod/*, allow
+        - p, proj:streamsage-prod:prod-admin, applications, action/*, streamsage-prod/*, allow
+      groups:
+        - streamsage-prod-admins
+        - platform-engineers
+
+    - name: prod-viewer
+      description: Read-only access to prod environment
+      policies:
+        - p, proj:streamsage-prod:prod-viewer, applications, get, streamsage-prod/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0,3'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

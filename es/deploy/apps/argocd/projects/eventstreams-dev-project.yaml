@@ -1,0 +1,84 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for DEV Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-dev
+  namespace: openshift-gitops
+  labels:
+    environment: dev
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Development - Full automation for rapid development
+
+  # Source repositories allowed for this project
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+    - '*'  # Allow all repos for development
+
+  # Destinations - where applications can be deployed
+  destinations:
+    # Kafka namespace
+    - namespace: 'kafka-dev'
+      server: 'https://kubernetes.default.svc'
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Orphaned resources
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  # RBAC Roles
+  roles:
+    - name: dev-admin
+      description: Full access to dev Event Streams
+      policies:
+        - p, proj:eventstreams-dev:dev-admin, applications, *, eventstreams-dev/*, allow
+        - p, proj:eventstreams-dev:dev-admin, applications, sync, eventstreams-dev/*, allow
+        - p, proj:eventstreams-dev:dev-admin, applications, override, eventstreams-dev/*, allow
+        - p, proj:eventstreams-dev:dev-admin, applications, action/*, eventstreams-dev/*, allow
+      groups:
+        - eventstreams-dev-admins
+        - platform-engineers
+
+    - name: dev-viewer
+      description: Read-only access to dev Event Streams
+      policies:
+        - p, proj:eventstreams-dev:dev-viewer, applications, get, eventstreams-dev/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  # Sync windows
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All application namespaces — kafka-{env}, streamsage-{env}, postgres-{env}
+# for 9 environments each (27 total).
+# The ibm-eventstreams operator namespace is managed by operator/kustomization.yaml.
+resources:
+  - kafka-namespaces.yaml
+  - streamsage-namespaces.yaml
+  - postgres-namespaces.yaml

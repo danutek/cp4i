@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-service-config
+  labels:
+    app: workflow-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  SERVICE_NAME: "streamsage-workflow-service"
+  LOG_LEVEL: "INFO"
+  SERVICE_HOST: "0.0.0.0"
+  SERVICE_PORT: "8000"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-es-kafka-bootstrap.kafka-dev.svc:9092"
+  KAFKA_CONSUMER_GROUP: "workflow-service"
+  KAFKA_TOPIC_TRANSACTION_STATE_CHANGE: "transaction.state.changed"
+  KAFKA_TOPIC_WORKFLOW_TRANSITION: "workflow.transition.completed"
+  KAFKA_TOPIC_APPROVAL_REQUESTED: "workflow.approval.requested"
+  KAFKA_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+  KAFKA_SASL_MECHANISM: "SCRAM-SHA-512"
+  ENABLE_AUTO_TRANSITIONS: "true"
+  MAX_TRANSITION_RETRIES: "3"

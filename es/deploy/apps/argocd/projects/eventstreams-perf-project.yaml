@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for PERF Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-perf
+  namespace: openshift-gitops
+  labels:
+    environment: perf
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Performance - Load and performance testing
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-perf'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: perf-admin
+      description: Full access to perf Event Streams
+      policies:
+        - p, proj:eventstreams-perf:perf-admin, applications, *, eventstreams-perf/*, allow
+        - p, proj:eventstreams-perf:perf-admin, applications, sync, eventstreams-perf/*, allow
+        - p, proj:eventstreams-perf:perf-admin, applications, override, eventstreams-perf/*, allow
+        - p, proj:eventstreams-perf:perf-admin, applications, action/*, eventstreams-perf/*, allow
+      groups:
+        - eventstreams-perf-admins
+        - platform-engineers
+
+    - name: perf-viewer
+      description: Read-only access to perf Event Streams
+      policies:
+        - p, proj:eventstreams-perf:perf-viewer, applications, get, eventstreams-perf/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-22 * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

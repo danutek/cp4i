@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for PROD Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-prod
+  namespace: openshift-gitops
+  labels:
+    environment: prod
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Production - Live production environment
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-prod'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: prod-admin
+      description: Full access to prod Event Streams
+      policies:
+        - p, proj:eventstreams-prod:prod-admin, applications, *, eventstreams-prod/*, allow
+        - p, proj:eventstreams-prod:prod-admin, applications, sync, eventstreams-prod/*, allow
+        - p, proj:eventstreams-prod:prod-admin, applications, override, eventstreams-prod/*, allow
+        - p, proj:eventstreams-prod:prod-admin, applications, action/*, eventstreams-prod/*, allow
+      groups:
+        - eventstreams-prod-admins
+        - platform-engineers
+
+    - name: prod-viewer
+      description: Read-only access to prod Event Streams
+      policies:
+        - p, proj:eventstreams-prod:prod-viewer, applications, get, eventstreams-prod/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0,3'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

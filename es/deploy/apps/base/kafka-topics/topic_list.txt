@@ -1,0 +1,10 @@
+streamsage.ingest.transaction
+streamsage.transaction.event
+streamsage.transaction.family.event
+streamsage.workflow.event
+streamsage.approval.event
+streamsage.attachment.event
+streamsage.notification.event
+streamsage.audit.event
+streamsage.ai.event
+streamsage.deadletter

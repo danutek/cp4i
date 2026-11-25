@@ -1,0 +1,76 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for DR Environment - Event Streams/Kafka
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: eventstreams-dr
+  namespace: openshift-gitops
+  labels:
+    environment: dr
+    bundle: eventstreams
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: Event Streams Disaster Recovery - Business continuity
+
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+
+
+  destinations:
+    - namespace: 'kafka-dr'
+      server: 'https://kubernetes.default.svc'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'eventstreams.ibm.com'
+      kind: '*'
+    - group: 'kafka.strimzi.io'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+      - group: 'eventstreams.ibm.com'
+        kind: KafkaUser
+      - group: 'kafka.strimzi.io'
+        kind: KafkaTopic
+
+  roles:
+    - name: dr-admin
+      description: Full access to dr Event Streams
+      policies:
+        - p, proj:eventstreams-dr:dr-admin, applications, *, eventstreams-dr/*, allow
+        - p, proj:eventstreams-dr:dr-admin, applications, sync, eventstreams-dr/*, allow
+        - p, proj:eventstreams-dr:dr-admin, applications, override, eventstreams-dr/*, allow
+        - p, proj:eventstreams-dr:dr-admin, applications, action/*, eventstreams-dr/*, allow
+      groups:
+        - eventstreams-dr-admins
+        - platform-engineers
+
+    - name: dr-viewer
+      description: Read-only access to dr Event Streams
+      policies:
+        - p, proj:eventstreams-dr:dr-viewer, applications, get, eventstreams-dr/*, allow
+      groups:
+        - eventstreams-viewers
+        - all-engineers
+
+  syncWindows:
+    - kind: allow
+      schedule: '0 2-4 * * 0,3'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true

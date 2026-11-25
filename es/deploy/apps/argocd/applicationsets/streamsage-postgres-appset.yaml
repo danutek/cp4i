@@ -1,0 +1,49 @@
+# ArgoCD ApplicationSet for StreamSage PostgreSQL clusters
+# Deploys a CloudNativePG Cluster + schema-init Job per environment.
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: streamsage-postgres
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - env: dev
+  template:
+    metadata:
+      name: '{{.env}}-postgres'
+      labels:
+        environment: '{{.env}}'
+        component: postgres
+        managed-by: argocd
+        app.kubernetes.io/part-of: streamsage
+    spec:
+      project: default
+      source:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        targetRevision: HEAD
+        path: 'deploy/apps/overlays/{{.env}}/postgres'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'postgres-{{.env}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=false
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

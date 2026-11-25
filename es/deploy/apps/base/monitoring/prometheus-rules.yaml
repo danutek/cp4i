@@ -1,0 +1,291 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streamsage-prometheus-rules
+  labels:
+    app: prometheus
+    component: monitoring
+data:
+  streamsage-alerts.yml: |
+    groups:
+      - name: streamsage_kafka
+        interval: 30s
+        rules:
+          # Kafka Broker Alerts
+          - alert: KafkaBrokerDown
+            expr: up{job="kafka-broker"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              component: kafka
+            annotations:
+              summary: "Kafka broker is down"
+              description: "Kafka broker {{ $labels.instance }} has been down for more than 5 minutes."
+
+          - alert: KafkaUnderReplicatedPartitions
+            expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+            for: 10m
+            labels:
+              severity: warning
+              component: kafka
+            annotations:
+              summary: "Kafka has under-replicated partitions"
+              description: "Kafka broker {{ $labels.instance }} has {{ $value }} under-replicated partitions."
+
+          - alert: KafkaOfflinePartitions
+            expr: kafka_controller_kafkacontroller_offlinepartitionscount > 0
+            for: 5m
+            labels:
+              severity: critical
+              component: kafka
+            annotations:
+              summary: "Kafka has offline partitions"
+              description: "Kafka cluster has {{ $value }} offline partitions."
+
+          - alert: KafkaISRShrink
+            expr: rate(kafka_server_replicamanager_isrshrinkspersec[5m]) > 0
+            for: 10m
+            labels:
+              severity: warning
+              component: kafka
+            annotations:
+              summary: "Kafka ISR is shrinking"
+              description: "Kafka broker {{ $labels.instance }} ISR is shrinking at {{ $value }} per second."
+
+          - alert: KafkaHighProducerLatency
+            expr: kafka_network_requestmetrics_totaltimems{request="Produce",quantile="0.99"} > 1000
+            for: 10m
+            labels:
+              severity: warning
+              component: kafka
+            annotations:
+              summary: "High Kafka producer latency"
+              description: "Kafka broker {{ $labels.instance }} has high producer latency: {{ $value }}ms (p99)."
+
+          - alert: KafkaHighConsumerLag
+            expr: kafka_consumergroup_lag > 10000
+            for: 15m
+            labels:
+              severity: warning
+              component: kafka
+            annotations:
+              summary: "High Kafka consumer lag"
+              description: "Consumer group {{ $labels.consumergroup }} has lag of {{ $value }} messages on topic {{ $labels.topic }}."
+
+          - alert: KafkaDiskUsageHigh
+            expr: (kafka_log_logmanager_logdirectoryoffline / kafka_log_logmanager_logdirectorytotal) > 0.85
+            for: 10m
+            labels:
+              severity: warning
+              component: kafka
+            annotations:
+              summary: "Kafka disk usage is high"
+              description: "Kafka broker {{ $labels.instance }} disk usage is above 85%."
+
+      - name: streamsage_kafka_connect
+        interval: 30s
+        rules:
+          # Kafka Connect Alerts
+          - alert: KafkaConnectDown
+            expr: up{job="kafka-connect"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              component: kafka-connect
+            annotations:
+              summary: "Kafka Connect is down"
+              description: "Kafka Connect instance {{ $labels.instance }} has been down for more than 5 minutes."
+
+          - alert: KafkaConnectorFailed
+            expr: kafka_connect_connector_status{state="FAILED"} > 0
+            for: 5m
+            labels:
+              severity: critical
+              component: kafka-connect
+            annotations:
+              summary: "Kafka connector has failed"
+              description: "Kafka connector {{ $labels.connector }} is in FAILED state."
+
+          - alert: KafkaConnectorTaskFailed
+            expr: kafka_connect_connector_task_status{state="FAILED"} > 0
+            for: 5m
+            labels:
+              severity: warning
+              component: kafka-connect
+            annotations:
+              summary: "Kafka connector task has failed"
+              description: "Kafka connector {{ $labels.connector }} task {{ $labels.task }} is in FAILED state."
+
+          - alert: KafkaConnectHighErrorRate
+            expr: rate(kafka_connect_sink_task_offset_commit_failure_percentage[5m]) > 0.1
+            for: 10m
+            labels:
+              severity: warning
+              component: kafka-connect
+            annotations:
+              summary: "High Kafka Connect error rate"
+              description: "Kafka Connect has error rate of {{ $value }}% for connector {{ $labels.connector }}."
+
+      - name: streamsage_services
+        interval: 30s
+        rules:
+          # StreamSage Service Alerts
+          - alert: StreamSageServiceDown
+            expr: up{job=~"streamsage-.*"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              component: streamsage-service
+            annotations:
+              summary: "StreamSage service is down"
+              description: "StreamSage service {{ $labels.job }} instance {{ $labels.instance }} has been down for more than 5 minutes."
+
+          - alert: StreamSageHighErrorRate
+            expr: rate(http_requests_total{job=~"streamsage-.*",status=~"5.."}[5m]) / rate(http_requests_total{job=~"streamsage-.*"}[5m]) > 0.05
+            for: 10m
+            labels:
+              severity: warning
+              component: streamsage-service
+            annotations:
+              summary: "High error rate in StreamSage service"
+              description: "StreamSage service {{ $labels.job }} has error rate above 5%: {{ $value }}%."
+
+          - alert: StreamSageHighLatency
+            expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=~"streamsage-.*"}[5m])) > 2
+            for: 10m
+            labels:
+              severity: warning
+              component: streamsage-service
+            annotations:
+              summary: "High latency in StreamSage service"
+              description: "StreamSage service {{ $labels.job }} has p99 latency above 2s: {{ $value }}s."
+
+          - alert: StreamSageHighMemoryUsage
+            expr: (container_memory_usage_bytes{pod=~"streamsage-.*"} / container_spec_memory_limit_bytes{pod=~"streamsage-.*"}) > 0.9
+            for: 10m
+            labels:
+              severity: warning
+              component: streamsage-service
+            annotations:
+              summary: "High memory usage in StreamSage service"
+              description: "StreamSage pod {{ $labels.pod }} memory usage is above 90%: {{ $value }}%."
+
+          - alert: StreamSageHighCPUUsage
+            expr: rate(container_cpu_usage_seconds_total{pod=~"streamsage-.*"}[5m]) > 0.9
+            for: 10m
+            labels:
+              severity: warning
+              component: streamsage-service
+            annotations:
+              summary: "High CPU usage in StreamSage service"
+              description: "StreamSage pod {{ $labels.pod }} CPU usage is above 90%: {{ $value }}%."
+
+          - alert: StreamSagePodRestartingFrequently
+            expr: rate(kube_pod_container_status_restarts_total{pod=~"streamsage-.*"}[1h]) > 5
+            for: 5m
+            labels:
+              severity: warning
+              component: streamsage-service
+            annotations:
+              summary: "StreamSage pod restarting frequently"
+              description: "StreamSage pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour."
+
+      - name: streamsage_database
+        interval: 30s
+        rules:
+          # PostgreSQL Alerts
+          - alert: PostgreSQLDown
+            expr: up{job="postgresql"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              component: database
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL instance {{ $labels.instance }} has been down for more than 5 minutes."
+
+          - alert: PostgreSQLHighConnections
+            expr: (pg_stat_database_numbackends / pg_settings_max_connections) > 0.8
+            for: 10m
+            labels:
+              severity: warning
+              component: database
+            annotations:
+              summary: "PostgreSQL connection usage is high"
+              description: "PostgreSQL instance {{ $labels.instance }} is using {{ $value }}% of max connections."
+
+          - alert: PostgreSQLSlowQueries
+            expr: rate(pg_stat_activity_max_tx_duration[5m]) > 60
+            for: 10m
+            labels:
+              severity: warning
+              component: database
+            annotations:
+              summary: "PostgreSQL has slow queries"
+              description: "PostgreSQL instance {{ $labels.instance }} has queries running longer than 60 seconds."
+
+          - alert: PostgreSQLReplicationLag
+            expr: pg_replication_lag > 30
+            for: 5m
+            labels:
+              severity: warning
+              component: database
+            annotations:
+              summary: "PostgreSQL replication lag is high"
+              description: "PostgreSQL replica {{ $labels.instance }} has replication lag of {{ $value }} seconds."
+
+          - alert: PostgreSQLDeadlocks
+            expr: rate(pg_stat_database_deadlocks[5m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+              component: database
+            annotations:
+              summary: "PostgreSQL has deadlocks"
+              description: "PostgreSQL database {{ $labels.datname }} has {{ $value }} deadlocks per second."
+
+      - name: streamsage_infrastructure
+        interval: 30s
+        rules:
+          # Infrastructure Alerts
+          - alert: NodeDiskPressure
+            expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+            for: 5m
+            labels:
+              severity: warning
+              component: infrastructure
+            annotations:
+              summary: "Node has disk pressure"
+              description: "Node {{ $labels.node }} is experiencing disk pressure."
+
+          - alert: NodeMemoryPressure
+            expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+            for: 5m
+            labels:
+              severity: warning
+              component: infrastructure
+            annotations:
+              summary: "Node has memory pressure"
+              description: "Node {{ $labels.node }} is experiencing memory pressure."
+
+          - alert: PersistentVolumeUsageHigh
+            expr: (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+            for: 10m
+            labels:
+              severity: warning
+              component: infrastructure
+            annotations:
+              summary: "Persistent volume usage is high"
+              description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is {{ $value }}% full."
+
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+              component: infrastructure
+            annotations:
+              summary: "Pod is crash looping"
+              description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping."
+
+

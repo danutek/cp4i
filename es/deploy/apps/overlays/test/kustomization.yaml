@@ -1,0 +1,18 @@
+# deploy/apps/overlays/test/kustomization.yaml
+#
+# This file is intentionally not a Kustomization resource entry point.
+# The test environment uses per-component subdirectories, each with their own
+# kustomization.yaml. ArgoCD ApplicationSets discover each component separately:
+#
+#   test/event-streams/       ← managed by event-streams-appset.yaml
+#   test/kafka-connect/       ← managed by kafka-connect-appset.yaml
+#   test/kafka-topics/        ← managed by kafka-topics-appset.yaml
+#   test/kafka-users/         ← managed by kafka-users-appset.yaml
+#   test/kafka-bridge/        ← managed by kafka-bridge-appset.yaml
+#   test/monitoring/          ← managed by kafka-monitoring-appset.yaml
+#   test/network-policies/    ← managed by network-policies-appset.yaml
+#   test/streamsage-services/ ← managed by streamsage-services-appset.yaml
+#   test/streamsage-console/  ← managed by streamsage-console-appset.yaml
+#
+# To validate a single component locally:
+#   oc kustomize deploy/apps/overlays/test/event-streams

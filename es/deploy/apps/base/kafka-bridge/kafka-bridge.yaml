@@ -1,0 +1,89 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: KafkaBridge
+metadata:
+  name: kafka-bridge
+  labels:
+    app: kafka-bridge
+    eventstreams.ibm.com/cluster: kafka-es
+    app.kubernetes.io/part-of: streamsage
+spec:
+  replicas: 1
+  bootstrapServers: kafka-es-kafka-bootstrap:9093
+
+  http:
+    port: 8080
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+        - PATCH
+
+  authentication:
+    type: scram-sha-512
+    username: kb-user
+    passwordSecret:
+      secretName: kb-user
+      password: password
+
+  tls:
+    trustedCertificates:
+      - secretName: kafka-es-cluster-ca-cert
+        certificate: ca.crt
+
+  consumer:
+    config:
+      auto.offset.reset: earliest
+      enable.auto.commit: true
+      auto.commit.interval.ms: 5000
+
+  producer:
+    config:
+      acks: all
+      compression.type: snappy
+      max.in.flight.requests.per.connection: 5
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  logging:
+    type: inline
+    loggers:
+      rootLogger.level: INFO
+      logger.bridge.level: INFO
+      logger.healthy.level: INFO
+      logger.ready.level: INFO
+
+  livenessProbe:
+    initialDelaySeconds: 15
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 15
+    timeoutSeconds: 5
+
+  template:
+    pod:
+      metadata:
+        labels:
+          app: kafka-bridge
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - kafka-bridge
+                topologyKey: kubernetes.io/hostname

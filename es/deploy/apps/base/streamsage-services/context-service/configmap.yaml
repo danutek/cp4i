@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: context-service-config
+  labels:
+    app: context-service
+    app.kubernetes.io/part-of: streamsage
+data:
+  SERVICE_NAME: "streamsage-context-service"
+  LOG_LEVEL: "INFO"
+  SERVICE_HOST: "0.0.0.0"
+  SERVICE_PORT: "8000"
+  MAX_SIMILAR_CASES: "5"
+  SIMILARITY_THRESHOLD: "0.7"
+  ENABLE_VECTOR_SEARCH: "false"
+  CACHE_TTL_SECONDS: "3600"
+  INCLUDE_STATE_HISTORY: "true"
+  INCLUDE_ATTRIBUTES: "true"
+  INCLUDE_ATTACHMENTS: "true"
+  INCLUDE_SIMILAR_CASES: "true"
+  MAX_STATE_HISTORY_ENTRIES: "50"

@@ -1,0 +1,29 @@
+apiVersion: eventstreams.ibm.com/v1
+kind: EventStreams
+metadata:
+  name: es
+spec:
+  version: latest
+  license:
+    accept: true
+    use: CloudPakForIntegrationNonProduction
+  strimziOverrides:
+    kafka:
+      replicas: 3
+      config:
+        offsets.topic.replication.factor: 3
+        transaction.state.log.replication.factor: 3
+        transaction.state.log.min.isr: 2
+        default.replication.factor: 3
+        min.insync.replicas: 2
+      storage:
+        type: persistent-claim
+        size: 100Gi
+        class: portworx-sc-repl-2
+      resources:
+        requests:
+          memory: 6Gi
+          cpu: "1500m"
+        limits:
+          memory: 12Gi
+          cpu: "3"

@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Core Services
+  - api-gateway/
+  - ingest-service/
+  - outbox-publisher/
+  - event-monitor/
+  
+  # Transaction Services
+  - transaction-service/
+  - tx-family-service/
+  
+  # Workflow and Context
+  - workflow-service/
+  - context-service/
+  
+  # Notification
+  - notification-service/
+
+commonLabels:
+  app.kubernetes.io/part-of: streamsage
+  app.kubernetes.io/managed-by: argocd
+
+# Made with Bob

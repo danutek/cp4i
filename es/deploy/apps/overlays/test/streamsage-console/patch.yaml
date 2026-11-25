@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamsage-console
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: streamsage-console
+          image: quay.io/danutek_us/streamsage-console:0.1.0
+          env:
+            - name: API_URL
+              value: http://api-gateway.streamsage-test.svc.cluster.local:8000
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: streamsage-console
+spec:
+  host: streamsage-console-test.apps.example.com

@@ -1,0 +1,75 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-21
+# Purpose: ArgoCD ApplicationSet for Kafka Topics automated deployment
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kafka-topics
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: streamsage
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        revision: HEAD
+        directories:
+          - path: deploy/apps/overlays/*/kafka-topics
+          - path: deploy/apps/overlays/test/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/qa/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/staging/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/eem/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/ep/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/perf/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/prod/kafka-topics
+            exclude: true
+          - path: deploy/apps/overlays/dr/kafka-topics
+            exclude: true
+  template:
+    metadata:
+      name: '{{index .path.segments 3}}-kafka-topics'
+      labels:
+        environment: '{{index .path.segments 3}}'
+        component: kafka-topics
+        managed-by: argocd
+        app.kubernetes.io/part-of: streamsage
+    spec:
+      project: default
+      source:
+        repoURL: https://github.ibm.com/danutek/StreamSage.git
+        targetRevision: HEAD
+        path: 'deploy/apps/overlays/{{index .path.segments 3}}/kafka-topics'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'kafka-{{index .path.segments 3}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=false
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: eventstreams.ibm.com
+          kind: KafkaTopic
+          jsonPointers:
+            - /status
+
+

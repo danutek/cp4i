@@ -1,0 +1,85 @@
+# Project: StreamSage Intelligent Transaction Processing Platform
+# Created: 2026-03-22
+# Purpose: ArgoCD Project for DEV Environment - StreamSage Applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: streamsage-dev
+  namespace: openshift-gitops
+  labels:
+    environment: dev
+    bundle: streamsage
+    app.kubernetes.io/part-of: streamsage
+spec:
+  description: StreamSage Development - Full automation for rapid development
+
+  # Source repositories allowed for this project
+  sourceRepos:
+    - 'https://github.ibm.com/danutek/StreamSage.git'
+    - '*'  # Allow all repos for development
+
+  # Destinations - where applications can be deployed
+  destinations:
+    # StreamSage services namespace
+    - namespace: 'streamsage-dev'
+      server: 'https://kubernetes.default.svc'
+    # PostgreSQL namespace
+    - namespace: 'postgres-dev'
+      server: 'https://kubernetes.default.svc'
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: '*'
+    - group: ''
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+
+  # Orphaned resources
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: PersistentVolumeClaim
+      - group: ''
+        kind: Secret
+
+  # RBAC Roles
+  roles:
+    - name: dev-admin
+      description: Full access to dev environment
+      policies:
+        - p, proj:streamsage-dev:dev-admin, applications, *, streamsage-dev/*, allow
+        - p, proj:streamsage-dev:dev-admin, applications, sync, streamsage-dev/*, allow
+        - p, proj:streamsage-dev:dev-admin, applications, override, streamsage-dev/*, allow
+        - p, proj:streamsage-dev:dev-admin, applications, action/*, streamsage-dev/*, allow
+      groups:
+        - streamsage-dev-admins
+        - platform-engineers
+
+    - name: dev-viewer
+      description: Read-only access to dev environment
+      policies:
+        - p, proj:streamsage-dev:dev-viewer, applications, get, streamsage-dev/*, allow
+      groups:
+        - streamsage-viewers
+        - all-engineers
+
+  # Sync windows
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+      automated: true
