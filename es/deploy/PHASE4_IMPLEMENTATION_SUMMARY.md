@@ -1,5 +1,7 @@
 # Phase 4 Implementation Summary
 
+**Example organization:** Ishanti Intelligence Collective (IIC).
+
 **Date:** 2026-03-21  
 **Status:** ✅ COMPLETED  
 **Phase:** Documentation & Knowledge Transfer
@@ -661,10 +663,10 @@ When Phase 4 is complete:
 
 ## Acknowledgments
 
-This migration successfully brings enterprise-grade deployment practices from the BCBS project to StreamSage, establishing a solid foundation for scalable, secure, and maintainable operations.
+This migration successfully brings enterprise-grade deployment practices from the IIC project to StreamSage, establishing a solid foundation for scalable, secure, and maintainable operations.
 
 **Special Thanks:**
-- BCBS team for the mature deployment patterns
+- IIC team for the mature deployment patterns
 - Platform team for implementation
 - SRE team for operational insights
 - All contributors to the migration effort

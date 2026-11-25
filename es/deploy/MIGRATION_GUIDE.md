@@ -1,18 +1,18 @@
-# Migration Guide: BCBS Deploy to StreamSage Deploy
+# Migration Guide: Ishanti Intelligence Collective (IIC) Deploy to StreamSage Deploy
 
 **Date:** 2026-03-21  
-**Purpose:** Consolidate BCBS deployment patterns into StreamSage platform  
+**Purpose:** Consolidate IIC deployment patterns into StreamSage platform\
 **Status:** Planning Document
 
 ---
 
 ## Executive Summary
 
-This guide provides a comprehensive strategy for migrating the mature, production-ready deployment infrastructure from the **bcbs** repository into the **StreamSage** repository. The bcbs deploy directory represents a sophisticated GitOps implementation with ArgoCD ApplicationSets, multi-environment support, and enterprise-grade operational tooling that should be adopted by StreamSage.
+This guide provides a comprehensive strategy for migrating the mature, production-ready deployment infrastructure from the **iic** repository into the **StreamSage** repository. The iic deploy directory represents a sophisticated GitOps implementation with ArgoCD ApplicationSets, multi-environment support, and enterprise-grade operational tooling that should be adopted by StreamSage.
 
 ### Key Findings
 
-**BCBS Deploy Strengths:**
+**IIC Deploy Strengths:**
 - ✅ **Mature GitOps Architecture** - 7 ApplicationSets managing 55+ applications automatically
 - ✅ **Comprehensive Documentation** - Extensive guides for operations, deployment, and troubleshooting
 - ✅ **Multi-Environment Support** - 9 environments (dev, qa, test, staging, eem, ep, perf, prod, dr)
@@ -31,7 +31,7 @@ This guide provides a comprehensive strategy for migrating the mature, productio
 
 ## Comparison Matrix
 
-| Feature | BCBS Deploy | StreamSage Deploy | Action Required |
+| Feature | IIC Deploy | StreamSage Deploy | Action Required |
 |---------|-------------|-------------------|-----------------|
 | **GitOps Automation** | ApplicationSets (7) | Manual Apps (9) | ✅ Migrate ApplicationSets |
 | **Environments** | 9 environments | 3 environments | ✅ Add 6 environments |
@@ -48,10 +48,10 @@ This guide provides a comprehensive strategy for migrating the mature, productio
 
 ## Directory Structure Comparison
 
-### BCBS Deploy Structure (Source)
+### IIC Deploy Structure (Source)
 
 ```
-bcbs/deploy/
+iic/deploy/
 ├── apps/
 │   ├── argocd/
 │   │   ├── applicationsets/          # 7 ApplicationSets (AUTO-GENERATION)
@@ -188,8 +188,8 @@ StreamSage/deploy/
 
 **Key Changes:**
 ```yaml
-# BCBS Pattern
-repoURL: https://github.ibm.com/danutek/bcbs.git
+# IIC Pattern
+repoURL: https://github.ibm.com/danutek/iic.git
 path: deploy/apps/overlays/*/event-streams
 
 # StreamSage Pattern
@@ -368,7 +368,7 @@ overlays/{env}/
 **Effort:** 2 days
 
 **Actions:**
-1. Migrate Grafana dashboards from bcbs:
+1. Migrate Grafana dashboards from iic:
    - `kafka-overview-dashboard.json`
    - `kafka-topics-dashboard.json`
    - `consumer-groups-dashboard.json`
@@ -454,13 +454,13 @@ done
 ### Step 3: Migrate ApplicationSets
 
 ```bash
-# Copy ApplicationSets from bcbs
-cp bcbs/deploy/apps/argocd/applicationsets/*.yaml \
+# Copy ApplicationSets from iic
+cp iic/deploy/apps/argocd/applicationsets/*.yaml \
    StreamSage/deploy/apps/argocd/applicationsets/
 
 # Update repository URLs in all ApplicationSets
 cd StreamSage/deploy/apps/argocd/applicationsets
-sed -i 's|github.ibm.com/danutek/bcbs|github.ibm.com/danutek/StreamSage|g' *.yaml
+sed -i 's|github.ibm.com/danutek/iic|github.ibm.com/danutek/StreamSage|g' *.yaml
 
 # Validate ApplicationSets
 for file in *.yaml; do
@@ -473,13 +473,13 @@ done
 
 ```bash
 # Copy base configurations (selective)
-cp -r bcbs/deploy/apps/base/network-policies StreamSage/deploy/apps/base/
-cp -r bcbs/deploy/apps/base/grafana StreamSage/deploy/apps/base/
-cp -r bcbs/deploy/apps/base/monitoring StreamSage/deploy/apps/base/
+cp -r iic/deploy/apps/base/network-policies StreamSage/deploy/apps/base/
+cp -r iic/deploy/apps/base/grafana StreamSage/deploy/apps/base/
+cp -r iic/deploy/apps/base/monitoring StreamSage/deploy/apps/base/
 
 # Update labels and references for StreamSage
 find StreamSage/deploy/apps/base -name "*.yaml" -exec \
-  sed -i 's/bcbsal-kafka/streamsage/g' {} \;
+  sed -i 's/iic-kafka/streamsage/g' {} \;
 ```
 
 ### Step 5: Create Environment Overlays
@@ -531,7 +531,7 @@ done
 
 ```bash
 # Copy cluster config
-cp -r bcbs/deploy/clusters/cluster-config/* \
+cp -r iic/deploy/clusters/cluster-config/* \
       StreamSage/deploy/clusters/cluster-config/
 
 # Update namespace references
@@ -543,27 +543,27 @@ find StreamSage/deploy/clusters/cluster-config -name "*.yaml" -exec \
 
 ```bash
 # Copy validation scripts
-cp bcbs/scripts/*.sh StreamSage/deploy/scripts/
-cp bcbs/scripts/README.md StreamSage/deploy/scripts/
+cp iic/scripts/*.sh StreamSage/deploy/scripts/
+cp iic/scripts/README.md StreamSage/deploy/scripts/
 
 # Make scripts executable
 chmod +x StreamSage/deploy/scripts/*.sh
 
 # Update script paths for StreamSage
 cd StreamSage/deploy/scripts
-sed -i 's|bcbs|StreamSage|g' *.sh
+sed -i 's|iic|StreamSage|g' *.sh
 ```
 
 ### Step 8: Migrate Documentation
 
 ```bash
 # Copy documentation
-cp bcbs/docs/*.md StreamSage/deploy/docs/
+cp iic/docs/*.md StreamSage/deploy/docs/
 
 # Update references
 cd StreamSage/deploy/docs
-sed -i 's/BCBSAL/StreamSage/g' *.md
-sed -i 's/bcbs/StreamSage/g' *.md
+sed -i 's/IIC/StreamSage/g' *.md
+sed -i 's/iic/StreamSage/g' *.md
 sed -i 's/kafka-es-/kafka-/g' *.md
 ```
 
@@ -620,7 +620,7 @@ StreamSage has multiple Python and Java services that need deployment configurat
 - `quarkus-ingest` - Java ingest service
 - `streamsage-console` - Next.js console (already exists)
 
-**Action:** Create base and overlay configurations for each service following the bcbs pattern.
+**Action:** Create base and overlay configurations for each service following the iic pattern.
 
 ### 2. StreamSage Topics
 
@@ -661,7 +661,7 @@ StreamSage uses JDBC sink connectors for PostgreSQL:
 StreamSage requires PostgreSQL with specific schema:
 
 **Action:**
-- Migrate PostgreSQL operator configuration from bcbs
+- Migrate PostgreSQL operator configuration from iic
 - Add StreamSage schema initialization
 - Configure connection secrets per environment
 
@@ -862,13 +862,13 @@ oc exec -it deployment/ingest-service -n kafka-test -- curl http://api-gateway:8
 
 ## References
 
-### BCBS Documentation
-- [`bcbs/README.md`](../bcbs/README.md) - Main repository overview
-- [`bcbs/deploy/apps/argocd/applicationsets/README.md`](../bcbs/deploy/apps/argocd/applicationsets/README.md) - ApplicationSets guide
-- [`bcbs/deploy/apps/argocd/projects/README.md`](../bcbs/deploy/apps/argocd/projects/README.md) - Projects guide
-- [`bcbs/docs/ARGOCD_GUIDE.md`](../bcbs/docs/ARGOCD_GUIDE.md) - ArgoCD operations
-- [`bcbs/docs/OPERATIONS_GUIDE.md`](../bcbs/docs/OPERATIONS_GUIDE.md) - Daily operations
-- [`bcbs/scripts/README.md`](../bcbs/scripts/README.md) - Validation scripts
+### IIC Documentation
+- [`iic/README.md`](../iic/README.md) - Main repository overview
+- [`iic/deploy/apps/argocd/applicationsets/README.md`](../iic/deploy/apps/argocd/applicationsets/README.md) - ApplicationSets guide
+- [`iic/deploy/apps/argocd/projects/README.md`](../iic/deploy/apps/argocd/projects/README.md) - Projects guide
+- [`iic/docs/ARGOCD_GUIDE.md`](../iic/docs/ARGOCD_GUIDE.md) - ArgoCD operations
+- [`iic/docs/OPERATIONS_GUIDE.md`](../iic/docs/OPERATIONS_GUIDE.md) - Daily operations
+- [`iic/scripts/README.md`](../iic/scripts/README.md) - Validation scripts
 
 ### StreamSage Documentation
 - [`StreamSage/README.md`](../README.md) - Platform overview
@@ -883,7 +883,7 @@ oc exec -it deployment/ingest-service -n kafka-test -- curl http://api-gateway:8
 
 ## Appendix A: File Mapping
 
-| BCBS File | StreamSage Target | Notes |
+| IIC File | StreamSage Target | Notes |
 |-----------|-------------------|-------|
 | `deploy/apps/argocd/applicationsets/*.yaml` | `deploy/apps/argocd/applicationsets/*.yaml` | Update repo URLs |
 | `deploy/apps/base/event-streams/*` | `deploy/apps/base/event-streams/*` | Merge with existing |
