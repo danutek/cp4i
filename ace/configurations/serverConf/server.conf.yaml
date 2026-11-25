@@ -1,0 +1,24 @@
+apiVersion: appconnect.ibm.com/v1beta1
+kind: Configuration
+metadata:
+  name: server-hlt-20-02
+spec:
+  type: serverconf
+  contents: |-
+    UmVzb3VyY2VNYW5hZ2VyczoKICBKVk06CiAgICAganZtTWluSGVhcFNpemU6IDI2MjE0NDAwMCAg
+    ICAjIG1pbmltdW0gSlZNICBoZWFwIHNpemUgaW4gYnl0ZXMKICAgICBqdm1NYXhIZWFwU2l6ZTog
+    MjE0NzQ4MzY0OCAgICMgbWF4aW11bSBKVk0gaGVhcCBzaXplIGluIGJ5dGVzCiMgZm9yIG1vcmUg
+    aGVhcCB1c2Ugc2V0dGluZ3MgYmVsb3cKIyAgICBqdm1NaW5IZWFwU2l6ZTogMjYyMTQ0MDAwICAg
+    ICAgICAjIG1pbmltdW0gSlZNICBoZWFwIHNpemUgaW4gYnl0ZXMKIyAgICBqdm1NYXhIZWFwU2l6
+    ZTogMTA3Mzc0MTgyNCAgICAgICAjIG1heGltdW0gSlZNIGhlYXAgc2l6ZSBpbiBieXRlcwojVXNl
+    clZhcmlhYmxlczoKIyAgdWRwLnNlcnZpY2UubG9va3VwLkZhY3RvcnlWZW5kb3JfQ3JlYXRlVXBk
+    YXRlX1JlcXVlc3RVUkw6ICdodHRwczovL2NybS5leGFtcGxlLmNvbS9zZXJ2aWNlcy9Tb2FwL2Ns
+    YXNzL2V4YW1wbGVJbnRlZ3JhdGlvblNlcnZpY2VzJwojICB1ZHAuc2VydmljZS5sb29rdXAuRmFj
+    dG9yeVZlbmRvcl9TZXNzaW9uSURfUmVxdWVzdFVSTDogJ2h0dHBzOi8vYXV0aC5leGFtcGxlLmNv
+    bS9zZXJ2aWNlcy9Tb2FwL2MvMzkuMC9leGFtcGxlLW9yZycKIyAgdWRwLnNlcnZpY2UubG9va3Vw
+    LkZhY3RvcnlWZW5kb3JfU2Vzc2lvbklEX0VuZFBvaW50VXNlcm5hbWU6ICdpbnRlZ3JhdGlvbi11
+    c2VyQGV4YW1wbGUuY29tJwojICB1ZHAuc2VydmljZS5sb29rdXAuRmFjdG9yeVZlbmRvcl9TZXNz
+    aW9uSURfRW5kUG9pbnRQYXNzd29yZDogJ1JFUExBQ0VfV0lUSF9QQVNTV09SRCcKIyAgdWRwLnNl
+    cnZpY2UubG9va3VwLkZhY3RvcnlWZW5kb3JfU2Vzc2lvbklEX0VuZFBvaW50VG9rZW46ICdSRVBM
+    QUNFX1dJVEhfVE9LRU4nCkRlZmF1bHRzOgogcG9saWN5UHJvamVjdDogJ1NBUENvbm5lY3Rpb25Q
+    b2xpY3knCg==

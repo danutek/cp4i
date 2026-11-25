@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prod-kafka-connect-metrics
+  namespace: kafka
+  labels:
+    app.kubernetes.io/name: kafka-connect-metrics
+    environment: prod
+data:
+  kafka-connect-metrics-config.yaml: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+      - pattern: 'kafka.connect<type=connect-worker-metrics><>connector-count'
+        name: kafka_connect_connector_count
+        type: GAUGE
+
+      - pattern: 'kafka.connect<type=connect-worker-metrics><>task-count'
+        name: kafka_connect_task_count
+        type: GAUGE
+
+      - pattern: 'kafka.connect<type=connector-task-metrics, connector=(.+), task=(.+)><>status'
+        name: kafka_connect_task_status
+        type: GAUGE
+        labels:
+          connector: "$1"
+          task: "$2"
+
+      - pattern: 'java.lang<type=Memory><HeapMemoryUsage>used'
+        name: jvm_memory_used_bytes
+        type: GAUGE

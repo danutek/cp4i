@@ -1,0 +1,66 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: agent1
+  namespace: queue-managers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mq-fte-agent1
+  template:
+    metadata:
+      labels:
+        app: mq-fte-agent1
+        deploymentconfig: mq-fte-agent1
+    spec:
+      volumes:
+        - name: mqmft-agent-config-map
+          configMap:
+            name: mqmft-agent-config
+            defaultMode: 420
+      containers:
+        - resources: {}
+          readinessProbe:
+            exec:
+              command:
+                - agentready
+            initialDelaySeconds: 15
+            timeoutSeconds: 3
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /mnt/termination-log
+          name: ibm-mq-managed-file-transfer-srcagent
+          livenessProbe:
+            exec:
+              command:
+                - agentalive
+            initialDelaySeconds: 90
+            timeoutSeconds: 5
+            periodSeconds: 90
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: MFT_AGENT_NAME
+              value: SRCAGENT
+            - name: LICENSE
+              value: accept
+            - name: MFT_AGENT_CONFIG_FILE
+              value: /mqmftcfg/agentconfig/mqmftcfg.json
+            - name: MFT_LOG_LEVEL
+              value: "info"
+            - name: MFT_AGENT_TRANSFER_LOG_PUBLISH_CONFIG_FILE
+              value: /logdna/logdna.json
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: mqmft-agent-config-map
+              mountPath: /mqmftcfg/agentconfig
+            - name: logdna-url-secret
+              mountPath: /logdna/logdna.json
+              subPath: logdna.json
+              readOnly: true              
+          terminationMessagePolicy: File
+          image: >-
+             icr.io/ibm-messaging/mqmft:latest
+      restartPolicy: Always

@@ -1,0 +1,39 @@
+apiVersion: eventstreams.ibm.com/v1beta2
+kind: KafkaConnect
+metadata:
+  name: kc
+  namespace: kafka
+  annotations:
+    eventstreams.ibm.com/use-connector-resources: "true"
+spec:
+  replicas: 1
+  image: quay.io/danutek_us/kc1:4
+
+  bootstrapServers: kafka-es-kafka-bootstrap.kafka.svc:9093
+
+  authentication:
+    type: scram-sha-512
+    username: danutek
+    passwordSecret:
+      secretName: danutek
+      password: password
+
+  tls:
+    trustedCertificates:
+      - secretName: kafka-es-cluster-ca-cert
+        certificate: ca.crt
+
+  config:
+    group.id: connect-cluster
+
+    config.storage.topic: connect-cluster-configs
+    offset.storage.topic: connect-cluster-offsets
+    status.storage.topic: connect-cluster-status
+
+    config.storage.replication.factor: 1
+    offset.storage.replication.factor: 1
+    status.storage.replication.factor: 1
+
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: "true"

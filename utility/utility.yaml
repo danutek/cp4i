@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: utility
+  namespace: utility
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: utility
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: utility
+    spec:
+      containers:
+      - image: us.icr.io/lcl-images/ubi-mq-gcc:6.0
+        imagePullPolicy: IfNotPresent
+        name: utility
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: datavol
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: all-icr-io
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: ubuntu
+      serviceAccountName: ubuntu
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: datavol
+        persistentVolumeClaim:
+          claimName: prod-sdm-qlsdmp02-ibm-mq-persisted-data

@@ -1,0 +1,33 @@
+kafka-topics.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --describe --topic events
+
+
+kafka-broker-api-versions.sh --bootstrap-server 	.event-streams.svc.cluster.local:9092
+
+
+kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list light-insecure-kafka-0.light-insecure-kafka-brokers.event-streams.svc:9092,light-insecure-kafka-1.light-insecure-kafka-brokers.event-streams.svc:9092,light-insecure-kafka-2.light-insecure-kafka-brokers.event-streams.svc:9092 --topic events --time -1
+
+
+kafka-console-producer.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --topic events
+kafka-console-consumer.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --topic events
+
+
+
+
+kafka-consumer-groups.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --list
+kafka-consumer-groups.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --describe --group console-consumer-89149
+
+
+kafka-console-consumer.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --topic events --group console-consumer-89149
+
+
+kafka-delete-records.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --offset-json-file ./a.config
+
+kafka-consumer-groups.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092  --delete --group my_consumer_group
+
+kafka-configs.sh --bootstrap-server light-insecure-kafka-bootstrap.event-streams.svc.cluster.local:9092 --entity-type brokers --describe
+
+kafka-configs.sh --bootstrap-server your_kafka_bootstrap_servers --entity-type brokers --entity-name your_broker_id --describe
+
+
+
+

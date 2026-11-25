@@ -1,0 +1,17 @@
+ResourceManagers:
+  JVM:
+     jvmMinHeapSize: 262144000    # minimum JVM  heap size in bytes
+     jvmMaxHeapSize: 2147483648   # maximum JVM heap size in bytes
+     jvmDebugPort 8877
+# for more heap use settings below
+#    jvmMinHeapSize: 262144000        # minimum JVM  heap size in bytes
+#    jvmMaxHeapSize: 1073741824       # maximum JVM heap size in bytes
+#UserVariables:
+#  udp.service.lookup.FactoryVendor_CreateUpdate_RequestURL: 'https://crm.example.com/services/Soap/class/exampleIntegrationServices'
+#  udp.service.lookup.FactoryVendor_SessionID_RequestURL: 'https://auth.example.com/services/Soap/c/39.0/example-org'
+#  udp.service.lookup.FactoryVendor_SessionID_EndPointUsername: 'integration-user@example.com'
+#  udp.service.lookup.FactoryVendor_SessionID_EndPointPassword: 'REPLACE_WITH_PASSWORD'
+#  udp.service.lookup.FactoryVendor_SessionID_EndPointToken: 'REPLACE_WITH_TOKEN'
+
+Defaults:
+ policyProject: 'SAPConnectionPolicy'

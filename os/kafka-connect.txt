@@ -1,0 +1,46 @@
+apiVersion: eventstreams.ibm.com/v1beta2
+kind: KafkaConnect
+metadata:
+  name: adx-connector
+  namespace: event-streams
+  labels:
+    backup.eventstreams.ibm.com/component: kafkaconnect
+spec:
+  authentication:
+    certificateAndKey:
+      certificate: user.crt
+      key: user.key
+      secretName: kafka-user1
+    type: tls
+  bootstrapServers: >-
+    example-es-kafka-bootstrap.event-streams:443
+  build:
+    output:
+      image: >-
+        my-image-registry.my-kafka-connect-image:latest
+      type: docker
+    plugins:
+      - artifacts:
+          - type: jar
+            url: >-
+              https://github.com/adx-sink
+        name: adx-sink
+  template:
+    buildConfig:
+      pullSecret: ibm-entitlement-key
+    pod:
+      imagePullSecrets:
+        - name: azure-image
+    connectContainer:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+  tls:
+    trustedCertificates:
+      - certificate: ca.crt
+        secretName: <eventstreams-instance>-cluster-ca-cert

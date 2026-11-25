@@ -1,0 +1,50 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: fte-agent-config
+  namespace: mq
+data:
+  # Credentials are omitted from this example.
+  # If authentication is required, supply the complete runtime JSON through
+  # a Kubernetes Secret mounted into the agent; do not put credentials here.
+  mqmftcfg.json: |
+    {
+      "coordinationQMgr": {
+        "name": "QM1",
+        "host": "qmd1.queuemanagers.",
+        "port": 1414,
+        "channel": "ESB.SVRCONN",
+        "additionalProperties": {}
+      },
+      "commandQMgr": {
+        "name": "MFTCMDQM",
+        "host": "cmdqm.ibm.com",
+        "port": 1414,
+        "channel": "ESB.SVRCONN",
+        "additionalProperties": {}
+      },
+      "agents": [
+        {
+          "name": "AGENT1",
+          "type": "STANDARD",
+          "qmgrName": "QMDFTE",
+          "qmgrHost": "agentqm.ibm.com",
+          "qmgrPort": 1414,
+          "qmgrChannel": "ESB.SVRCONN",
+          "additionalProperties": {
+            "enableQueueInputOutput": "true"
+          }
+        },
+        {
+          "name": "AGENT2",
+          "type": "STANDARD",
+          "qmgrName": "QMDFTE",
+          "qmgrHost": "agentqm.ibm.com",
+          "qmgrPort": 1414,
+          "qmgrChannel": "ESB.SVRCONN",
+          "additionalProperties": {
+            "enableQueueInputOutput": "true"
+          }
+        }
+      ]
+    }
