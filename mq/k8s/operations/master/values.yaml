@@ -1,0 +1,10 @@
+# Schema defaults only — always pass an environment file (e.g. values.dev.cus.yaml).
+global:
+  environment: ""
+  region: ""
+  repoUrl: ""
+  targetRevision: ""
+
+mqm:
+  adminExtraActions: []
+  adminGroups: []

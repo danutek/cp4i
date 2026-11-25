@@ -1,0 +1,42 @@
+# Single-instance queue manager QM_DM_Q.
+#   folder name = Argo CD Application name = Kubernetes resource name prefix (qm-dm-q)
+#   MQ queue manager name = QM_DM_Q
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../common/queue-manager-single-instance
+
+namePrefix: qm-dm-q-
+
+# Per-queue-manager label, added to every selector and pod label so the Service selects only
+# this queue manager's pod.
+labels:
+  - pairs:
+      app.kubernetes.io/instance: qm-dm-q
+    includeSelectors: true
+    includeTemplates: true
+
+# The hash suffix stays on, so a changed MQSC changes the pod template and the pod is replaced.
+configMapGenerator:
+  - name: mqsc
+    files:
+      - qm.mqsc=mqsc/qm.mqsc
+
+patches:
+  - target:
+      kind: StatefulSet
+      name: ibm-mq
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: ibm-mq
+      spec:
+        template:
+          spec:
+            containers:
+              - name: qmgr
+                env:
+                  - name: MQ_QMGR_NAME
+                    value: QM_DM_Q

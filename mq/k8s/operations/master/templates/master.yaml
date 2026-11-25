@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: devops
+  namespace: argocd
+spec:
+  description: ArgoCD bootstrap and cluster tooling
+  sourceRepos:
+    - "*" # cluster tooling pulls third-party charts
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+# No resources-finalizer: deleting master must not cascade into workloads (PVCs)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: master
+  namespace: argocd
+spec:
+  project: devops
+  source:
+    repoURL: {{ required "global.repoUrl is required" .Values.global.repoUrl }}
+    targetRevision: {{ required "global.targetRevision is required" .Values.global.targetRevision }}
+    path: operations/master
+    helm:
+      valueFiles:
+        - values.{{ required "global.environment is required" .Values.global.environment }}.{{ required "global.region is required" .Values.global.region }}.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s

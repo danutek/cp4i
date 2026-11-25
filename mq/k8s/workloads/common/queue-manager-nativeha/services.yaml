@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ibm-mq
+imagePullSecrets:
+  - name: ibm-entitlement-key   # TBD: remove if images come from IIC's ACR without an entitlement key
+---
+# Client traffic: MQ listener and web console. Selects every pod; only the active pod is Ready.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq
+  labels:
+    app.kubernetes.io/name: ibm-mq
+spec:
+  type: ClusterIP
+  ports:
+    - name: qmgr
+      port: 1414
+    - name: console-https
+      port: 9443
+  selector:
+    app.kubernetes.io/name: ibm-mq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq-metrics
+  labels:
+    app.kubernetes.io/name: ibm-mq
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9157"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9157
+      targetPort: 9157
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ibm-mq
+---
+# Native HA replication: one Service per pod so the replicas can find each other.
+# publishNotReadyAddresses is required because only the active pod is Ready.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq-replica-0
+  labels:
+    app.kubernetes.io/name: ibm-mq
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  ports:
+    - name: qmgr
+      port: 9414
+  selector:
+    statefulset.kubernetes.io/pod-name: NAME-0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq-replica-1
+  labels:
+    app.kubernetes.io/name: ibm-mq
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  ports:
+    - name: qmgr
+      port: 9414
+  selector:
+    statefulset.kubernetes.io/pod-name: NAME-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq-replica-2
+  labels:
+    app.kubernetes.io/name: ibm-mq
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  ports:
+    - name: qmgr
+      port: 9414
+  selector:
+    statefulset.kubernetes.io/pod-name: NAME-2

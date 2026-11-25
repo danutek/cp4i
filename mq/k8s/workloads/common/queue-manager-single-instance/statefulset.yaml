@@ -1,0 +1,163 @@
+# Single-instance queue manager, plain Kubernetes (no IBM MQ Operator, no Helm).
+# One pod. Its three PVCs (qm, data, log) are created from volumeClaimTemplates and are kept
+# when the pod is replaced, so the queue manager restarts with its data.
+# Derived from the IBM sample chart ibm-messaging/mq-helm (charts/ibm-mq 14.0.0, Apache-2.0).
+#
+# Names are generic here. Each queue manager's base sets namePrefix and MQ_QMGR_NAME.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ibm-mq
+  labels:
+    app.kubernetes.io/name: ibm-mq
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ibm-mq
+  serviceName: ibm-mq
+  replicas: 1
+  # A single instance is Ready when it runs, so the normal rolling update works:
+  # Kubernetes stops the pod and starts a new one on the same PVCs.
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        # License annotations. TBD: set from IIC's entitlement for dev queue managers.
+        productName: "IBM MQ for Non-Production Environment"
+        productID: "151bec68564a4a47a14e6fa99266deff"
+        productMetric: "VIRTUAL_PROCESSOR_CORE"
+        productChargedContainers: qmgr
+      labels:
+        app.kubernetes.io/name: ibm-mq
+    spec:
+      serviceAccountName: ibm-mq
+      imagePullSecrets:
+        - name: ibm-entitlement-key
+      securityContext:
+        fsGroup: 0
+      terminationGracePeriodSeconds: 30
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values: ["amd64"]
+                  - key: kubernetes.io/os
+                    operator: In
+                    values: ["linux"]
+                  # MQ node pool (REQ-INF-002)
+                  - key: workload
+                    operator: In
+                    values: ["ibm-mq"]
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ibm-mq
+        - key: dedicated
+          operator: Equal
+          value: ibm-mq
+          effect: NoSchedule
+      volumes:
+        - name: mqsc
+          configMap:
+            name: mqsc            # generated per queue manager; Kustomize rewrites the name
+            defaultMode: 420
+      containers:
+        - name: qmgr
+          image: cp.icr.io/cp/ibm-mqadvanced-server@sha256:06f0892b36e879d0f8957477deeabfe2b4e0fda13f64792edbe7825caf7b77e3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 1414
+            - containerPort: 9443
+            - containerPort: 9157
+          env:
+            - name: LICENSE
+              value: accept
+            - name: MQ_QMGR_NAME
+              value: QMNAME        # set in each queue manager's base
+            - name: AMQ_CONTAINER_LICENSING
+              value: "true"
+            - name: MQ_LOGGING_CONSOLE_FORMAT
+              value: basic
+            - name: MQ_ENABLE_METRICS
+              value: "true"
+            - name: MQ_EPHEMERAL_PREFIX
+              value: /run/mqm
+            - name: MQ_GRACE_PERIOD
+              value: "29"
+          volumeMounts:
+            # The container loads every /etc/mqm/*.mqsc at startup
+            - name: mqsc
+              mountPath: /etc/mqm/qm.mqsc
+              subPath: qm.mqsc
+              readOnly: true
+            - name: qm
+              mountPath: /mnt/mqm
+            - name: data
+              mountPath: /mnt/mqm-data
+            - name: log
+              mountPath: /mnt/mqm-log
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            privileged: false
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            exec:
+              command: [chkmqhealthy]
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: [chkmqready]
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 1
+          startupProbe:
+            exec:
+              command: [chkmqstarted]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 24
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+  # Dev sizes. Storage class: managed-csi-premium-cmk (Azure CSI Premium SSD with Customer-Managed Keys)
+  volumeClaimTemplates:
+    - metadata:
+        name: qm
+      spec:
+        storageClassName: managed-csi-premium-cmk
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: data
+      spec:
+        storageClassName: managed-csi-premium-cmk
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 10Gi
+    - metadata:
+        name: log
+      spec:
+        storageClassName: managed-csi-premium-cmk
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 10Gi

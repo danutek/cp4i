@@ -1,0 +1,41 @@
+# Reusable Kustomize Component to wire Azure Key Vault CSI secrets into any queue manager.
+# Opt in from a queue manager overlay (workloads/mqm/<qm>/overlays/<env>/<region>/kustomization.yaml)
+# together with the matching environment component:
+#
+#   components:
+#     - ../../../../../common/components/keyvault-secrets
+#     - ../../../../../common/components/keyvault-env/dev/cus
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - secretproviderclass.yaml
+
+patches:
+  - target:
+      kind: StatefulSet
+      labelSelector: app.kubernetes.io/name=ibm-mq
+    path: statefulset-patch.yaml
+
+# Derive unique per-QM names (<qm>-ibm-mq-kv) from the prefixed StatefulSet name so
+# queue managers sharing a namespace never collide on SecretProviderClass or Secret names.
+replacements:
+  - source:
+      kind: StatefulSet
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: SecretProviderClass
+        fieldPaths:
+          - metadata.name
+          - spec.secretObjects.0.secretName
+        options:
+          delimiter: "-"
+          index: 0
+      - select:
+          kind: StatefulSet
+        fieldPaths:
+          - spec.template.spec.volumes.[name=kv-secrets].csi.volumeAttributes.secretProviderClass
+        options:
+          delimiter: "-"
+          index: 0

@@ -1,0 +1,16 @@
+# Blocks voluntary evictions (node drains, cluster upgrades) from removing Native HA pods.
+# Native HA keeps only one pod Ready (the active queue manager), so the other two always count as
+# unavailable. With maxUnavailable: 1 the budget therefore allows no evictions at all: a drain
+# waits instead of deleting a pod. Pods are then moved on purpose, one at a time, after checking
+# the replicas are in sync (IBM sample: samples/genericresources/kubernetesupgrade/drainMQContainers.sh
+# in ibm-messaging/mq-helm; customise before use).
+# The selector gets the per-queue-manager instance label from the base kustomization.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ibm-mq
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ibm-mq

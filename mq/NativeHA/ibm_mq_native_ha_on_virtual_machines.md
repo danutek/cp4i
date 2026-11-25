@@ -2,7 +2,7 @@
 
 IBM MQ Native HA is available directly on supported Linux virtual machines and bare-metal servers from **IBM MQ 9.4.4**. It uses MQ-managed recovery-log replication instead of shared queue-manager storage or the Pacemaker/DRBD stack used by RDQM.
 
-**Scope:** Architecture, deployment, and operational guidance for a three-instance Linux Native HA queue manager. Cross-Region Replication (CRR) and In-Region Replication (IRR) are described separately because they have different availability and recovery behavior.
+**Scope:** Architecture, deployment, and operational guidance for a three-instance Linux Native HA queue manager. Cross-Region Replication (CRR) and In-Region Replication (IRR) are described separately because they have different availability and recovery behavior. For step-by-step Day-0/Day-1/Day-2 execution commands, see the companion [Native HA on Linux VMs Runbook](./native_ha_runbook.md).
 
 **Documentation basis:** IBM MQ 9.4.x and 10.0.x documentation, reviewed on 2026-11-25. Linux Native HA starts at 9.4.4, a Continuous Delivery release; do not assume that a 9.4.0 LTS fix pack includes it. IRR requires a release supporting that feature, covered here by the 10.0.x documentation. The examples below have been checked against documentation, but have not been executed as part of this document's review.
 
@@ -13,7 +13,7 @@ Before provisioning, record the exact MQ release, maintenance level, Linux distr
 - Production Linux Native HA/CRR requires IBM MQ Advanced entitlement or the applicable Native HA and CRR add-on for Linux. The add-on does not grant unrelated Advanced capabilities.
 - IBM provides distinct production, non-production, and replica entitlement components. For CRR, include the Recovery group's leader and replicas in the licensing assessment; do not assume that only the current Live active instance matters.
 - On Linux, apply the appropriate installation entitlement tags using `setmqinst`, following the [license information][licensing].
-- Initially install all instances at the same MQ version and maintenance level, with the same processor architecture and consistent installation/data paths. Temporary differences during an approved upgrade are addressed in Section 11.
+- Initially install all instances at the same MQ version and maintenance level, with the same processor architecture, environment type, and consistent installation/data paths. Do not mix VMs, bare-metal servers, and containers within one Native HA group. Temporary version differences during an approved upgrade are addressed in Section 11.
 - `/opt/mqm` and `/var/mqm` are defaults, not mandatory paths. If changed, apply the same layout on every instance and update service definitions, scripts, and keystore references.
 
 Minimum server components depend on the packaging format:
@@ -41,6 +41,14 @@ Sources: [Linux Native HA availability][whats-new], [Linux installation][rpm-ins
 
 With IRR `Strict`, the default, logged work requires the groups to be connected and synchronized, supporting RPO 0 for planned and unplanned failover under the documented failure model. Loss of that relationship can stop work and cause the Live instance to abdicate. With `Eventual`, the Live instance can progress without Recovery acknowledgements while replication is unavailable, so an unplanned failover can lose that work. When synchronized, both settings use synchronous replication. Select the mode according to the agreed RPO and availability requirements.
 
+### Choosing Between Native HA on VMs, RDQM, and Multi-Instance Queue Managers
+
+| Option | Storage & replication | Platform & OS constraints | DR options | Typical fit |
+| --- | --- | --- | --- | --- |
+| **Native HA (Linux VMs)** | Local non-shared storage; MQ-managed Raft recovery-log replication | Supported Linux distros on MQ 9.4.4+; no kernel modules or Pacemaker | Native HA CRR (async, 6 nodes) or IRR (sync, 2 nodes, MQ 10.0.x) | Modern Linux VM/bare-metal deployments avoiding DRBD/Pacemaker or aligning with container MQ skills |
+| **RDQM** | Local block storage; OS/kernel-level DRBD + Pacemaker | RHEL-focused due to DRBD kernel-module dependency | DR/HA RDQM (sync local + async remote) | Established RHEL estates with existing Pacemaker/DRBD automation or MQ versions prior to 9.4.4 (see [RDQM guide](../rdqm/mq_rdqm_complete_guide.md)) |
+| **Multi-Instance QM** | Shared networked filesystem (e.g., NFSv4) | Broad OS support; availability depends on shared storage resilience | Storage-layer replication | Environments with existing HA shared storage and simpler 2-node active/standby requirements |
+
 Sources: [CRR/IRR comparison][dr-comparison] and [IRR behavior][irr].
 
 ## 3. Architecture, Quorum, and Message Durability
@@ -59,6 +67,17 @@ Two powered-on VMs are not necessarily a usable quorum: the instances must commu
 - **Non-persistent messages are discarded when Native HA leadership changes, regardless of `NPMCLASS`.** Do not promise that every message survives failover.
 
 Replicated logging has the characteristics of linear logging with automatic log management and automatic media images. It does not require shared storage or storage-layer replication; underlying cloud or enterprise disks can still have their own resilience mechanisms.
+
+### What Is Replicated vs. Host-Local
+
+| Replicated via recovery logs | Host-local (synchronize externally across all instances) |
+| --- | --- |
+| MQ object definitions (queues, channels, listeners, topics, subscriptions) | `qm.ini` and `/var/mqm/mqs.ini` |
+| Object authorities (`AUTHREC`), `CHLAUTH` rules, and `CONNAUTH` definitions | Replication and application TLS keystores, stash files, and `InitialKeyFile`s |
+| Committed persistent messages and in-flight XA/syncpoint transaction state | Channel/API/security exits and external libraries |
+| Queue-manager runtime state recoverable from logs | `systemd` service units, monitoring scripts, and OS users/groups/PAM/LDAP config |
+
+Keep OS users, groups, UIDs/GIDs, or directory-service bindings consistent across all three VMs when using OS-based authentication/OAM; otherwise, applications may encounter `2035 MQRC_NOT_AUTHORIZED` only after a failover.
 
 Sources: [Native HA overview][nha], [logging types][logging], [non-persistent message behavior][mqmd], and [client reconnection][reconnect].
 
@@ -81,7 +100,7 @@ Example inventory:
 | `beta.example.com` | `beta` | TCP 1414 | TCP 9414 |
 | `gamma.example.com` | `gamma` | TCP 1414 | TCP 9414 |
 
-These ports are example choices. Permit the configured replication traffic among the three hosts and application/channel traffic to the possible active hosts. For multiple queue managers on one host, allocate distinct listening ports. CRR needs separately configured inter-group connectivity; 9415 is an example choice, not a substitute for checking the actual group configuration.
+These ports are example choices. Permit the configured replication traffic among the three hosts and application/channel traffic to the possible active hosts. Ensure hostname resolution for `ReplicationAddress` peers is resilient (for example, backed by redundant DNS or local `/etc/hosts` entries where appropriate) so a transient DNS outage does not destabilize replication quorum. For multiple queue managers on one host, allocate distinct listening ports. CRR needs separately configured inter-group connectivity; 9415 is an example choice, not a substitute for checking the actual group configuration.
 
 ## 5. Responsibilities Outside Kubernetes/OpenShift
 
@@ -284,7 +303,19 @@ Sources: [Log configuration and media imaging][nha10], [logging types][logging],
 
 Configure release-appropriate MQ statistics and infrastructure monitoring. Native HA replication metrics are available on MQ system topics; additional log-latency statistics are documented from 9.4.5. Alert on time spent degraded and application impact, not only whether processes are running.
 
-Source: [MQ system-topic metrics][metrics].
+### Interpreting `HASTATUS` and Common Faults
+
+| `HASTATUS` value | Meaning | Operational response |
+| --- | --- | --- |
+| `Normal` | Instance is operating and replicating normally | Healthy baseline (confirm `INSYNC(yes)` and `BACKLOG(0)`) |
+| `Checking` | Verifying recovery-log consistency during startup or recovery | Wait briefly; if stuck, inspect MQ error logs and `journalctl` |
+| `Synchronizing` | Receiving log records to catch up with the active instance | Monitor `BACKLOG` trend; investigate network/disk latency if it stalls or grows |
+| `Rebasing` | Receiving a full replacement recovery log (common on new/stale instances or CRR rebase) | Confirm adequate free disk space; do not delete temporary `-backup` log directories |
+| `Disk full` | Instance filesystem exhausted space | Free or expand storage on that host following MQ recovery guidance; do not manually delete active logs |
+| `Disconnected` | Peer communication lost | Verify host/service status, TCP `9414` firewall rules, DNS resolution, and replication TLS certificates/labels |
+| `Unknown` | Status cannot be determined | Check `mqmonitor@MYQMGR` status, local MQ logs, and FDCs |
+
+Source: [MQ system-topic metrics][metrics] and [Native HA troubleshooting][troubleshooting].
 
 ### Prepare a non-production test
 
@@ -294,7 +325,7 @@ On the active instance, define a dedicated test queue through `runmqsc MYQMGR`:
 DEFINE QLOCAL(NHA.TEST) DEFPSIST(YES)
 ```
 
-With the sample programs installed, use `amqsput NHA.TEST MYQMGR` on the active host to put uniquely identifiable test messages. After failover, use `amqsget NHA.TEST MYQMGR` on the new active host to verify them. These local-bindings samples test queue-manager recovery; **also run a separate client-based test** using the production client API and connection/reconnection settings.
+With the sample programs installed (typically under `/opt/mqm/samp/bin`, which is not automatically on `$PATH` after `setmqenv -s`), use `/opt/mqm/samp/bin/amqsput NHA.TEST MYQMGR` on the active host to put uniquely identifiable test messages. After failover, use `/opt/mqm/samp/bin/amqsget NHA.TEST MYQMGR` on the new active host to verify them. These local-bindings samples test queue-manager recovery; **also run a separate client-based test** using the production client API and connection/reconnection settings.
 
 The test queue and messages must be dedicated to the exercise. Record successful operations, commit outcomes, roles, timestamps, and message identifiers before injecting faults.
 
@@ -317,7 +348,7 @@ Run disruptive network, storage-failure, and multi-node tests only in an appropr
 
 **Fix-pack updates and changes to version/release/modification levels are not equivalent.** A higher `V.R.M` instance cannot write log data to a lower `V.R.M` replica. Election preferences and replica eligibility therefore change during an upgrade. A fix-pack-only change to `F` does not have that same restriction, but mixed levels should still be temporary.
 
-Use the [Native HA upgrade instructions][upgrade] for the exact source and target levels. Plan the instances as one queue manager, upgrade them close together, and avoid leaving one upgraded instance under extended observation while the rest remain at an older level.
+Use the [Native HA upgrade instructions][upgrade] for the exact source and target levels. Plan the instances as one queue manager, upgrade them close together, and avoid leaving one upgraded instance under extended observation while the rest remain at an older level. For **Native HA CRR**, upgrade the Recovery group first so it stays at an equal or higher MQ version than the Live group; switching or failing over to a lower-version Recovery group is unsupported.
 
 For a change whose supported procedure allows rolling instance maintenance:
 
@@ -342,6 +373,11 @@ Maintain separate recovery material for:
 - Application connection configuration and the supported procedure for restoring message/log state when that is part of the recovery objective.
 
 Do not assume recovery-log replication distributes arbitrary OS files or certificate changes. Use configuration management for those assets. Follow a release-appropriate IBM backup/restore procedure and prove it in an isolated exercise; a live filesystem copy or unrelated VM snapshots must not be assumed to form a consistent, restorable MQ backup.
+
+### Replacing a Permanently Lost VM and Catastrophic Quorum Loss
+
+- **Single permanently failed or corrupted instance (quorum intact at `2/3`):** Stop `mqmonitor@MYQMGR` on the affected host (if reachable) and clear local corruption with `dltmqm MYQMGR`, or provision a replacement VM with the identical OS/architecture, MQ level, installation/data paths, and OS identities. Recreate the blank instance with `crtmqm -lr <same_instance_name>` using the same log extent size (`-lf`), restore its `qm.ini`, replication/application TLS keystores, and `systemd` unit, then start `mqmonitor@MYQMGR`. Verify it progresses through `Synchronizing`/`Rebasing` back to `INSYNC(yes)`, `HASTATUS(Normal)`, and `QUORUM(3/3)`.
+- **Permanent loss of two instances (quorum lost):** A sole surviving instance cannot safely form quorum or guarantee complete up-to-date state. Do not force-promote it independently; recover the service by restoring from a tested backup/rebuild procedure or by executing the documented CRR Recovery-group promotion and subsequent rebase procedure.
 
 When migrating an existing queue manager, separately plan definitions/authorities, messages, certificates, application cutover, rollback, and outage requirements. The `crtmqm` commands in Section 6 create new instances; they are not an in-place conversion or a message migration procedure.
 

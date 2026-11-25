@@ -1,0 +1,10 @@
+global:
+  environment: dev
+  region: cus
+  repoUrl: https://github.com/iic/iic-mqm-infrastructure
+  targetRevision: main
+ 
+mqm:
+  adminExtraActions: [sync, update]
+  # Populate with the deployment-specific Entra group object IDs for iic-mqm-admins.
+  adminGroups: []

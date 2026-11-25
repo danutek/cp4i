@@ -1,0 +1,85 @@
+{{- $env := required "global.environment is required" .Values.global.environment -}}
+{{- $region := required "global.region is required" .Values.global.region -}}
+{{- $repoUrl := required "global.repoUrl is required" .Values.global.repoUrl -}}
+{{- $targetRevision := required "global.targetRevision is required" .Values.global.targetRevision -}}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mqm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  description: IBM MQ workloads
+  sourceRepos:
+    - https://github.com/iic/iic-mqm-infrastructure
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: mq-*
+    - server: https://kubernetes.default.svc
+      namespace: ibm-custom-services
+  clusterResourceWhitelist: []
+  roles:
+    - name: mq-admins
+      description: MQ admins. Read-only unless the environment's values file grants adminExtraActions.
+      policies:
+        - p, proj:mqm:mq-admins, applications, get, mqm/*, allow
+        - p, proj:mqm:mq-admins, logs, get, mqm/*, allow
+        {{- range .Values.mqm.adminExtraActions }}
+        - p, proj:mqm:mq-admins, applications, {{ . }}, mqm/*, allow
+        {{- end }}
+      groups:
+        {{- toYaml .Values.mqm.adminGroups | nindent 8 }}
+---
+# One Application per queue manager: any workloads/mqm/<qm>/overlays/<environment>/<region> folder is picked up
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: mqm
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  # Deleting this ApplicationSet must never cascade into workload resources (PVCs)
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: {{ $repoUrl }}
+        revision: {{ $targetRevision }}
+        directories:
+          - path: workloads/mqm/*/overlays/{{ $env }}/{{ $region }}
+  template:
+    # No resources-finalizer: deleting the Application must not cascade into workload resources (PVCs)
+    metadata:
+      name: '{{ `{{ index .path.segments 2 }}` }}'
+      labels:
+        environment: {{ $env }}
+        region: {{ $region }}
+    spec:
+      project: mqm
+      source:
+        repoURL: {{ $repoUrl }}
+        targetRevision: {{ $targetRevision }}
+        path: '{{ `{{ .path.path }}` }}'
+      destination:
+        server: https://kubernetes.default.svc
+        # Default for resources without a namespace; overlays set it via kustomize `namespace:`
+        namespace: mq-{{ $env }}
+      syncPolicy:
+        # Auto-sync in dev only; higher environments are synced manually
+        {{- if eq $env "dev" }}
+        automated:
+          prune: true
+          selfHeal: true
+        {{- end }}
+        # Namespaces are owned by Terraform; no CreateNamespace
+        syncOptions:
+          - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m

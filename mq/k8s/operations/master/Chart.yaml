@@ -1,0 +1,5 @@
+apiVersion: v2
+name: master
+description: ArgoCD root app-of-apps (IIC AKS pattern). Installed by Terraform (infrastructure/aks/argocd.tf), then self-managed by the master Application.
+type: application
+version: 1.0.0

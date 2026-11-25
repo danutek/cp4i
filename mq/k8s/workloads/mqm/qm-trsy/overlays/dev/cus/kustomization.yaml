@@ -1,0 +1,25 @@
+# Dev / cus overlay for single-instance queue manager QM_TRSY.
+# Argo CD picks this folder up via workloads/mqm/*/overlays/dev/cus.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mq-dev            # Namespace is created by Terraform
+
+resources:
+  - ../../../base
+
+labels:
+  - pairs:
+      environment: dev
+      region: cus
+
+patches:
+  # Option 1: Dedicated static private IP on Azure Internal Load Balancer.
+  # Exposes MQ listener on port 1414 and web console on port 9443.
+  - target:
+      kind: Service
+      name: qm-trsy-ibm-mq
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/service.beta.kubernetes.io~1azure-load-balancer-ipv4
+        value: "10.208.130.37"

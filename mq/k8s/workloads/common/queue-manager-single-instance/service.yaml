@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ibm-mq
+imagePullSecrets:
+  - name: ibm-entitlement-key   # TBD: remove if images come from IIC's ACR without an entitlement key
+---
+# Client access to the queue manager through an internal Azure load balancer.
+# Every single-instance queue manager has its own dedicated static private IP (ADR-002 Option 1).
+# Each queue manager's overlay sets the IP annotation; the container listens on 1414 (qmgr)
+# and 9443 (console-https).
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-mq
+  labels:
+    app.kubernetes.io/name: ibm-mq
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-ipv4: 0.0.0.0   # set in the overlay
+    service.beta.kubernetes.io/azure-load-balancer-tcp-idle-timeout: "30"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - name: qmgr
+      port: 1414
+      targetPort: 1414
+      protocol: TCP
+    - name: console-https
+      port: 9443
+      targetPort: 9443
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ibm-mq
