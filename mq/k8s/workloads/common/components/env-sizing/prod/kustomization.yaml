@@ -1,0 +1,43 @@
+# Native HA sizing and licensing profile for PROD (estimated defaults; tune per QM workload).
+# Per pod (x3 replicas): CPU 2 req / 4 lim, Memory 4Gi req / 8Gi lim,
+# Disk qm=10Gi / data=64Gi / log=32Gi (106Gi per pod, 318Gi total per QM; aligned with Azure Premium SSD tiers).
+# Strict 3-AZ topology spread (DoNotSchedule) so all 3 replicas land in distinct availability zones.
+# License: IBM MQ Advanced (Production). Verify productID against IIC's actual IBM entitlement.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: StatefulSet
+      name: ibm-mq
+    patch: |-
+      - op: replace
+        path: /spec/template/metadata/annotations/productName
+        value: "IBM MQ Advanced"
+      - op: replace
+        path: /spec/template/metadata/annotations/productID
+        value: "208423bb063c43288328b1d788745b0c"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "4Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "4"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "8Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "10Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/1/spec/resources/requests/storage
+        value: "64Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/2/spec/resources/requests/storage
+        value: "32Gi"
+      - op: replace
+        path: /spec/template/spec/topologySpreadConstraints/0/whenUnsatisfiable
+        value: "DoNotSchedule"

@@ -1,0 +1,19 @@
+# Environment-level Azure Key Vault configuration for test / cus.
+# Include alongside workloads/common/components/keyvault-secrets in any test/cus queue manager overlay.
+# Populate the TBD values below once before enabling Key Vault CSI on test queue managers.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: SecretProviderClass
+    patch: |-
+      - op: replace
+        path: /spec/parameters/keyvaultName
+        value: TBD-test-keyvault-name
+      - op: replace
+        path: /spec/parameters/tenantId
+        value: TBD-azure-tenant-id
+      - op: replace
+        path: /spec/parameters/userAssignedIdentityID
+        value: TBD-aks-kv-addon-identity-client-id

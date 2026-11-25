@@ -5,20 +5,34 @@ metadata:
 imagePullSecrets:
   - name: ibm-entitlement-key   # TBD: remove if images come from IIC's ACR without an entitlement key
 ---
-# Client traffic: MQ listener and web console. Selects every pod; only the active pod is Ready.
+# Client access to the Native HA queue manager through an Azure Standard Internal Load Balancer
+# (ADR-002 Option 1). Selects all 3 pods, but only the active pod passes chkmqready, so
+# externalTrafficPolicy: Local routes traffic exclusively to the active pod's node while
+# preserving client source IP for CHLAUTH rules.
+# Each queue manager's overlay sets the dedicated static private IP annotation.
 apiVersion: v1
 kind: Service
 metadata:
   name: ibm-mq
   labels:
     app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/component: client
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-ipv4: 0.0.0.0   # set in the overlay
+    service.beta.kubernetes.io/azure-load-balancer-tcp-idle-timeout: "30"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
+  externalTrafficPolicy: Local
   ports:
     - name: qmgr
       port: 1414
+      targetPort: 1414
+      protocol: TCP
     - name: console-https
       port: 9443
+      targetPort: 9443
+      protocol: TCP
   selector:
     app.kubernetes.io/name: ibm-mq
 ---
@@ -28,32 +42,38 @@ metadata:
   name: ibm-mq-metrics
   labels:
     app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/component: metrics
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9157"
 spec:
   type: ClusterIP
   ports:
-    - port: 9157
+    - name: metrics
+      port: 9157
       targetPort: 9157
       protocol: TCP
   selector:
     app.kubernetes.io/name: ibm-mq
 ---
-# Native HA replication: one Service per pod so the replicas can find each other.
+# Native HA replication: one Service per pod so the replicas can reach each other on TCP 9414.
 # publishNotReadyAddresses is required because only the active pod is Ready.
+# components/qm-naming rewrites NAME-0/1/2 to <qm>-ibm-mq-0/1/2.
 apiVersion: v1
 kind: Service
 metadata:
   name: ibm-mq-replica-0
   labels:
     app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/component: replication
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
   ports:
-    - name: qmgr
+    - name: replication
       port: 9414
+      targetPort: 9414
+      protocol: TCP
   selector:
     statefulset.kubernetes.io/pod-name: NAME-0
 ---
@@ -63,12 +83,15 @@ metadata:
   name: ibm-mq-replica-1
   labels:
     app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/component: replication
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
   ports:
-    - name: qmgr
+    - name: replication
       port: 9414
+      targetPort: 9414
+      protocol: TCP
   selector:
     statefulset.kubernetes.io/pod-name: NAME-1
 ---
@@ -78,11 +101,14 @@ metadata:
   name: ibm-mq-replica-2
   labels:
     app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/component: replication
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
   ports:
-    - name: qmgr
+    - name: replication
       port: 9414
+      targetPort: 9414
+      protocol: TCP
   selector:
     statefulset.kubernetes.io/pod-name: NAME-2

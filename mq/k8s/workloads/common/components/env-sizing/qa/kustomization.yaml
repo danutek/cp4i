@@ -1,0 +1,36 @@
+# Native HA sizing profile for QA (estimated defaults; override per QM overlay if needed).
+# Per pod (x3 replicas): CPU 1 req / 2 lim, Memory 2Gi req / 4Gi lim,
+# Disk qm=10Gi / data=30Gi / log=20Gi (60Gi per pod, 180Gi total per QM).
+# License: IBM MQ Advanced for Non-Production Environment (inherited from common base).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: StatefulSet
+      name: ibm-mq
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "1"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "2Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "4Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "10Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/1/spec/resources/requests/storage
+        value: "30Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/2/spec/resources/requests/storage
+        value: "20Gi"
+      - op: replace
+        path: /spec/template/spec/topologySpreadConstraints/0/whenUnsatisfiable
+        value: "ScheduleAnyway"

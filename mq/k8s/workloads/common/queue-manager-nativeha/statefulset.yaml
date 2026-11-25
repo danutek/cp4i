@@ -2,10 +2,15 @@
 # Derived from the IBM sample chart ibm-messaging/mq-helm (charts/ibm-mq 14.0.0, Apache-2.0)
 # rendered with queueManager.nativeha.enable=true.
 #
-# Names are generic here. Each queue manager's base sets namePrefix, and the
-# components/qm-naming component rewrites every value that embeds the final name
-# (replica addresses, pod-name selectors). Do not rename things here without
-# updating that component.
+# Names are generic here. Each queue manager's base component sets namePrefix, and
+# workloads/common/components/qm-naming rewrites every value that embeds the final
+# StatefulSet name (statefulSetName label, podAntiAffinity, topologySpreadConstraints,
+# replica addresses, and pod-name selectors). Do not rename placeholders here without
+# updating components/qm-naming.
+#
+# Note: MQ_NATIVE_HA_INSTANCE_* env vars are deprecated in IBM MQ 9.4.1+ in favor of
+# NativeHAInstance INI stanzas mounted under /etc/mqm. Keep these until replication TLS
+# (port 9414) and custom INI ConfigMaps are introduced.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -28,9 +33,10 @@ spec:
   template:
     metadata:
       annotations:
-        # License annotations. Values depend on IIC's entitlement: set per environment in the overlay.
-        productName: "IBM MQ for Non-Production Environment"
-        productID: "151bec68564a4a47a14e6fa99266deff"
+        # Native HA requires IBM MQ Advanced entitlement.
+        # Non-production default here; prod env-sizing component overrides to Production.
+        productName: "IBM MQ Advanced for Non-Production Environment"
+        productID: "21dfe9a0f00f444f888756d835334909"
         productMetric: "VIRTUAL_PROCESSOR_CORE"
         productChargedContainers: qmgr
       labels:
@@ -75,14 +81,17 @@ spec:
           operator: Equal
           value: ibm-mq
           effect: NoSchedule
-      # Spread the 3 replicas across zones (REQ-INF-009). Dev uses a single zone: the overlay may remove this.
+      # Spread each queue manager's 3 replicas across availability zones (REQ-INF-009).
+      # Uses statefulSetName (rewritten per QM by qm-naming) so spreading is evaluated per
+      # queue manager rather than across all queue managers in the shared namespace.
+      # perf and prod env-sizing components tighten whenUnsatisfiable to DoNotSchedule.
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: ibm-mq
+              statefulSetName: NAME
       volumes:
         - name: mqsc
           configMap:
@@ -93,15 +102,19 @@ spec:
           image: cp.icr.io/cp/ibm-mqadvanced-server@sha256:06f0892b36e879d0f8957477deeabfe2b4e0fda13f64792edbe7825caf7b77e3
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 1414
-            - containerPort: 9443
-            - containerPort: 9157
-            - containerPort: 9414
+            - name: qmgr
+              containerPort: 1414
+            - name: console-https
+              containerPort: 9443
+            - name: metrics
+              containerPort: 9157
+            - name: replication
+              containerPort: 9414
           env:
             - name: LICENSE
               value: accept
             - name: MQ_QMGR_NAME
-              value: QMNAME        # set in each queue manager's base
+              value: QMNAME        # set in each queue manager's base component
             - name: MQ_NATIVE_HA
               value: "true"
             - name: MQ_NATIVE_HA_INSTANCE_0_NAME
@@ -166,15 +179,18 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 24
+          # Default resources; overridden per environment by components/env-sizing/<env>.
           resources:
             requests:
               cpu: 500m
-              memory: 512Mi
+              memory: 1Gi
             limits:
               cpu: "1"
-              memory: 1Gi
-  # One set of three volumes per pod. MQ replicates between them.
-  # Storage class: managed-csi-premium-cmk (Azure CSI Premium SSD with Customer-Managed Keys)
+              memory: 2Gi
+  # One set of three volumes per pod. MQ replicates recovery logs between them.
+  # Storage class: managed-csi-premium-cmk (Azure CSI Premium SSD with Customer-Managed Keys).
+  # Default sizes below; overridden per environment by components/env-sizing/<env>.
+  # Preserve order [0]=qm, [1]=data, [2]=log — env-sizing JSON patches target these indices.
   volumeClaimTemplates:
     - metadata:
         name: qm
@@ -183,7 +199,7 @@ spec:
         accessModes: [ReadWriteOnce]
         resources:
           requests:
-            storage: 10Gi
+            storage: 5Gi
     - metadata:
         name: data
       spec:
@@ -191,7 +207,7 @@ spec:
         accessModes: [ReadWriteOnce]
         resources:
           requests:
-            storage: 50Gi
+            storage: 20Gi
     - metadata:
         name: log
       spec:
@@ -199,4 +215,4 @@ spec:
         accessModes: [ReadWriteOnce]
         resources:
           requests:
-            storage: 20Gi
+            storage: 10Gi

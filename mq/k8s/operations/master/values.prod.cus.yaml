@@ -1,0 +1,11 @@
+global:
+  environment: prod
+  region: cus
+  repoUrl: https://github.com/iic/iic-mqm-infrastructure
+  targetRevision: main
+
+mqm:
+  # Read-only by default in prod; add [sync] only if MQ admins execute controlled prod syncs.
+  adminExtraActions: []
+  # Populate with the deployment-specific Entra group object IDs for iic-mqm-admins.
+  adminGroups: []

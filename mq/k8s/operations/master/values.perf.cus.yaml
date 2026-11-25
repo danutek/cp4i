@@ -1,0 +1,11 @@
+global:
+  environment: perf
+  region: cus
+  repoUrl: https://github.com/iic/iic-mqm-infrastructure
+  targetRevision: main
+
+mqm:
+  # Manual sync in Argo CD; MQ admins may trigger syncs in perf.
+  adminExtraActions: [sync]
+  # Populate with the deployment-specific Entra group object IDs for iic-mqm-admins.
+  adminGroups: []

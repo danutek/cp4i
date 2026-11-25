@@ -1,23 +1,22 @@
-# Single-instance queue manager QM_SDL_Q.
+# Queue manager identity and MQSC component for QM_SDL_Q.
 #   folder name = Argo CD Application name = Kubernetes resource name prefix (qm-sdl-q)
 #   MQ queue manager name = QM_SDL_Q
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - ../../../common/queue-manager-single-instance
+# Included as a Component by every environment overlay so dev can use single-instance
+# while test, qa, perf, and prod use Native HA without duplicating MQSC or identity config.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
 
 namePrefix: qm-sdl-q-
 
 # Per-queue-manager label, added to every selector and pod label so the Service selects only
-# this queue manager's pod.
+# this queue manager's pod(s).
 labels:
   - pairs:
       app.kubernetes.io/instance: qm-sdl-q
     includeSelectors: true
     includeTemplates: true
 
-# The hash suffix stays on, so a changed MQSC changes the pod template and the pod is replaced.
+# The hash suffix stays on, so a changed MQSC changes the pod template and triggers a rollout.
 configMapGenerator:
   - name: mqsc
     files:

@@ -6,6 +6,9 @@ kind: Kustomization
 namespace: mq-dev            # Namespace is created by Terraform
 
 resources:
+  - ../../../../../common/queue-manager-single-instance
+
+components:
   - ../../../base
 
 labels:
@@ -18,7 +21,7 @@ patches:
   # Exposes MQ listener on port 1414 and web console on port 9443.
   - target:
       kind: Service
-      name: qm-sdl-q-ibm-mq
+      name: ibm-mq
     patch: |-
       - op: replace
         path: /metadata/annotations/service.beta.kubernetes.io~1azure-load-balancer-ipv4

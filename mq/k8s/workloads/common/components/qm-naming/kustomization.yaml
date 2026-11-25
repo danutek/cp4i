@@ -1,0 +1,70 @@
+# Rewrites all Native HA placeholders ("NAME", "NAME-0/1/2", "NAME-replica-0/1/2(9414)")
+# using the final prefixed StatefulSet metadata.name (e.g. "qm-gclr-q-ibm-mq").
+#
+# Include this Component in every Native HA queue manager overlay alongside the
+# queue manager's base component (which sets namePrefix).
+# Kustomize executes replacements AFTER namePrefix, while source/target select.name
+# continues to match the original resource names ("ibm-mq", "ibm-mq-replica-0/1/2").
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+replacements:
+  # 1. Exact StatefulSet name replacements (labels, podAntiAffinity, topologySpreadConstraints)
+  - source:
+      kind: StatefulSet
+      name: ibm-mq
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: StatefulSet
+          name: ibm-mq
+        fieldPaths:
+          - spec.template.metadata.labels.statefulSetName
+          - spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.0.labelSelector.matchExpressions.0.values.0
+          - spec.template.spec.topologySpreadConstraints.0.labelSelector.matchLabels.statefulSetName
+
+  # 2. Prefixed segment replacements: replaces leading "NAME" before "-" with "<qm>-ibm-mq"
+  #    - NAME-0               -> <qm>-ibm-mq-0
+  #    - NAME-replica-0(9414) -> <qm>-ibm-mq-replica-0(9414)
+  - source:
+      kind: StatefulSet
+      name: ibm-mq
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: StatefulSet
+          name: ibm-mq
+        fieldPaths:
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_0_NAME].value
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_1_NAME].value
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_2_NAME].value
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS].value
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS].value
+          - spec.template.spec.containers.[name=qmgr].env.[name=MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS].value
+        options:
+          delimiter: "-"
+          index: 0
+      - select:
+          kind: Service
+          name: ibm-mq-replica-0
+        fieldPaths:
+          - spec.selector.[statefulset.kubernetes.io/pod-name]
+        options:
+          delimiter: "-"
+          index: 0
+      - select:
+          kind: Service
+          name: ibm-mq-replica-1
+        fieldPaths:
+          - spec.selector.[statefulset.kubernetes.io/pod-name]
+        options:
+          delimiter: "-"
+          index: 0
+      - select:
+          kind: Service
+          name: ibm-mq-replica-2
+        fieldPaths:
+          - spec.selector.[statefulset.kubernetes.io/pod-name]
+        options:
+          delimiter: "-"
+          index: 0

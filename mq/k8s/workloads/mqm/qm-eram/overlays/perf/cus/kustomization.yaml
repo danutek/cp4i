@@ -1,0 +1,31 @@
+# PERF / cus overlay for Native HA queue manager QM_ERAM.
+# Argo CD picks this folder up via workloads/mqm/*/overlays/perf/cus.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mq-perf          # Namespace is created by Terraform
+
+resources:
+  - ../../../../../common/queue-manager-nativeha
+
+components:
+  - ../../../base
+  - ../../../../../common/components/qm-naming
+  - ../../../../../common/components/env-sizing/perf
+
+labels:
+  - pairs:
+      environment: perf
+      region: cus
+
+patches:
+  # Option 1: Dedicated static private IP on Azure Internal Load Balancer.
+  # TBD: Replace placeholder 10.208.133.x IP with the allocated perf/cus VNet ILB IP.
+  # Exposes MQ listener on port 1414 and web console on port 9443.
+  - target:
+      kind: Service
+      name: ibm-mq
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/service.beta.kubernetes.io~1azure-load-balancer-ipv4
+        value: "10.208.133.35"
