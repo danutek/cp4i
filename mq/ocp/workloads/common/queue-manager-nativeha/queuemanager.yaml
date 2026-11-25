@@ -1,0 +1,84 @@
+# The IBM MQ Operator owns StatefulSets, Services, Routes, Pods and PVC reconciliation.
+apiVersion: mq.ibm.com/v1beta1
+kind: QueueManager
+metadata:
+  name: qm
+  labels:
+    app.kubernetes.io/name: ibm-mq
+    app.kubernetes.io/part-of: iic-mq-ocp
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  version: 10.0.0.0-r1
+  license:
+    accept: false
+    license: L-UMVX-XYNRAD
+    use: NonProduction
+    metric: VirtualProcessorCore
+  imagePullSecrets:
+  - name: ibm-entitlement-key
+  labels:
+    queueManagerIdentity: QM_ID
+  queueManager:
+    name: QMNAME
+    availability:
+      type: NativeHA
+      updateStrategy: RollingUpdate
+      tls:
+        cipherSpec: ANY_TLS12_OR_HIGHER
+        secretName: mq-nativeha-replication-tls
+    mqsc:
+    - configMap:
+        name: mqsc
+        items:
+        - qm.mqsc
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    storage:
+      defaultDeleteClaim: false
+      queueManager:
+        type: persistent-claim
+        size: 5Gi
+        deleteClaim: false
+      persistedData:
+        enabled: true
+        type: persistent-claim
+        size: 10Gi
+        deleteClaim: false
+      recoveryLogs:
+        enabled: true
+        type: persistent-claim
+        size: 10Gi
+        deleteClaim: false
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+      tls:
+        provider: openshift
+    route:
+      enabled: false
+  web:
+    enabled: true
+    route:
+      enabled: true
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            queueManagerIdentity: QM_ID
+        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              queueManagerIdentity: QM_ID
+          topologyKey: topology.kubernetes.io/zone

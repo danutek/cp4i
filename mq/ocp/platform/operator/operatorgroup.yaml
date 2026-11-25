@@ -1,0 +1,7 @@
+# Cluster-wide watch. Reuse an existing suitable installation instead of installing a second operator.
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: iic-mq-operators
+  namespace: iic-mq-operators
+spec: {}

@@ -1,0 +1,8 @@
+# Optional external Secret; supply runtime.mqsc through your approved secret-management integration.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+- target:
+    kind: QueueManager
+  patch: "- op: add\n  path: /spec/queueManager/mqsc/-\n  value:\n    secret:\n      name: mq-runtime-config\n \
+    \     items:\n      - runtime.mqsc\n"

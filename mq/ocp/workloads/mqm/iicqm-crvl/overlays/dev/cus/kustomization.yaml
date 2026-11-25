@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../../../../common/queue-manager-single-instance
+namespace: mq-ocp-dev
+components:
+- ../../../base
+- ../../../../../common/components/env-sizing/dev
+- ../../../../../common/components/operator-references
+labels:
+- pairs:
+    environment: dev
+    region: cus
+  includeSelectors: false
+patches:
+- target:
+    kind: QueueManager
+  patch: "- op: replace\n  path: /spec/queueManager/mqsc/0/configMap/items\n  value:\n\
+    \  - dev-connectivity.mqsc\n"
+replacements:
+- source:
+    kind: QueueManager
+    name: qm
+    fieldPath: metadata.name
+  targets:
+  - select:
+      kind: QueueManager
+      name: qm
+    fieldPaths:
+    - spec.labels.queueManagerIdentity

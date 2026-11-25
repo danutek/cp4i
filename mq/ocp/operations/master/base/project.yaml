@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mq-ocp
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  description: Ishanti Intelligence Collective (IIC) operator-managed IBM MQ
+  sourceRepos:
+  - https://github.com/iic/cp4i
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: mq-ocp-dev
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+  - group: mq.ibm.com
+    kind: QueueManager
+  - group: ''
+    kind: ConfigMap

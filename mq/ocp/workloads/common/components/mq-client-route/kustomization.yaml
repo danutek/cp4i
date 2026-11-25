@@ -1,0 +1,18 @@
+# Opt in only after provisioning mq-client-tls in the operand namespace.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+configMapGenerator:
+- name: mq-client-tls-config
+  files:
+  - client-tls.mqsc
+generatorOptions:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    argocd.argoproj.io/sync-wave: '-1'
+patches:
+- target:
+    kind: QueueManager
+  patch: "- op: replace\n  path: /spec/queueManager/route/enabled\n  value: true\n- op: add\n  path: /spec/pki\n\
+    \  value:\n    keys:\n    - name: ibmmqtls\n      secret:\n        secretName: mq-client-tls\n        items:\n\
+    \        - tls.key\n        - tls.crt\n        - ca.crt\n- op: add\n  path: /spec/queueManager/mqsc/-\n  value:\n\
+    \    configMap:\n      name: mq-client-tls-config\n      items:\n      - client-tls.mqsc\n"

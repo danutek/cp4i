@@ -1,0 +1,15 @@
+* ============================================================
+* QM_G5_Q - Development / Connectivity Testing Configuration
+* Wide-open security for dev client testing
+* ============================================================
+
+* --- Disable Connection Authentication & Channel Authentication ---
+ALTER QMGR CHLAUTH(DISABLED) CONNAUTH(' ')
+REFRESH SECURITY TYPE(CONNAUTH)
+
+* --- Server-Connection Channel (Open Access) ---
+DEFINE CHANNEL('ADMIN.SVRCONN') CHLTYPE(SVRCONN) TRPTYPE(TCP) MCAUSER('mqm') REPLACE
+
+* --- Test Queues ---
+DEFINE QLOCAL('TEST.1') DEFPSIST(YES) REPLACE
+DEFINE QLOCAL('TEST.2') DEFPSIST(YES) REPLACE

@@ -1,0 +1,3 @@
+* TLS for the sample ADMIN.SVRCONN channel; client authentication/authorization is still required.
+ALTER QMGR CERTLABL('ibmmqtls')
+ALTER CHANNEL('ADMIN.SVRCONN') CHLTYPE(SVRCONN) SSLCIPH('ANY_TLS12_OR_HIGHER') SSLCAUTH(REQUIRED)

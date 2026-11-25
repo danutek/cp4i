@@ -1,0 +1,16 @@
+nameReference:
+- kind: ConfigMap
+  version: v1
+  fieldSpecs:
+  - group: mq.ibm.com
+    version: v1beta1
+    kind: QueueManager
+    path: spec/queueManager/mqsc/configMap/name
+  - group: mq.ibm.com
+    version: v1beta1
+    kind: QueueManager
+    path: spec/queueManager/ini/configMap/name
+  - group: mq.ibm.com
+    version: v1beta1
+    kind: QueueManager
+    path: spec/queueManager/files/configMap/name

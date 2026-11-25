@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: mq-ocp
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+  - git:
+      repoURL: https://github.com/iic/cp4i
+      revision: main
+      directories:
+      - path: mq/ocp/workloads/mqm/*/overlays/dev/cus
+  template:
+    metadata:
+      name: '{{ index .path.segments (sub (len .path.segments) 4) }}-ocp-dev-cus'
+      labels:
+        environment: dev
+        region: cus
+    spec:
+      project: mq-ocp-dev-cus
+      source:
+        repoURL: https://github.com/iic/cp4i
+        targetRevision: main
+        path: '{{ .path.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: mq-ocp-dev
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - ServerSideApply=true
+        - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m

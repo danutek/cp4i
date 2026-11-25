@@ -1,0 +1,12 @@
+# Catalog changes control operator upgrades; provision the approved IBM-specific catalog first.
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-mq
+  namespace: iic-mq-operators
+spec:
+  channel: v4.0-sc2
+  name: ibm-mq
+  source: ibmmq-operator-catalogsource
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic

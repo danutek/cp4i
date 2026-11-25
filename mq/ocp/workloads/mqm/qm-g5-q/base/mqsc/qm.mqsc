@@ -1,0 +1,15 @@
+* Authenticated baseline. Configure your deployment's application identities and authorities before use.
+ALTER AUTHINFO(SYSTEM.DEFAULT.AUTHINFO.IDPWOS) AUTHTYPE(IDPWOS) CHCKCLNT(REQUIRED) ADOPTCTX(YES)
+ALTER QMGR CHLAUTH(ENABLED) CONNAUTH(SYSTEM.DEFAULT.AUTHINFO.IDPWOS)
+REFRESH SECURITY TYPE(CONNAUTH)
+
+* ============================================================
+* QM_G5_Q - Development / Connectivity Testing Configuration
+* ============================================================
+
+
+DEFINE CHANNEL('ADMIN.SVRCONN') CHLTYPE(SVRCONN) TRPTYPE(TCP) REPLACE
+
+* --- Test Queues ---
+DEFINE QLOCAL('TEST.1') DEFPSIST(YES) REPLACE
+DEFINE QLOCAL('TEST.2') DEFPSIST(YES) REPLACE

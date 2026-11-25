@@ -1,0 +1,21 @@
+# Bootstrap installs only the AppProject/ApplicationSet, not the cluster-wide operator.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mq-ocp-root-perf-cus
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/iic/cp4i
+    targetRevision: main
+    path: mq/ocp/operations/master/overlays/perf/cus
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openshift-gitops
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true

@@ -1,0 +1,21 @@
+# Logical MQ name: iicqm_trcmo; namespace-scoped CR name: iicqm-trcmo-qm.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+namePrefix: iicqm-trcmo-
+labels:
+- pairs:
+    app.kubernetes.io/instance: iicqm-trcmo
+  includeSelectors: false
+configMapGenerator:
+- name: mqsc
+  files:
+  - qm.mqsc=mqsc/qm.mqsc
+  - dev-connectivity.mqsc=mqsc/dev-connectivity.mqsc
+generatorOptions:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    argocd.argoproj.io/sync-wave: '-1'
+patches:
+- target:
+    kind: QueueManager
+  patch: "- op: replace\n  path: /spec/queueManager/name\n  value: iicqm_trcmo\n"

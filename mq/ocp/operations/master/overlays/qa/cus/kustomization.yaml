@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../../base
+patches:
+- target:
+    kind: AppProject
+  patch: "- op: replace\n  path: /metadata/name\n  value: mq-ocp-qa-cus\n- op: replace\n  path: /spec/destinations/0/namespace\n\
+    \  value: mq-ocp-qa\n- op: add\n  path: /spec/roles\n  value:\n  - name: mq-admins\n    description: Bind approved\
+    \ IIC groups here; empty by default.\n    policies:\n    - p, proj:mq-ocp-qa-cus:mq-admins, applications, get,\
+    \ mq-ocp-qa-cus/*, allow\n    - p, proj:mq-ocp-qa-cus:mq-admins, logs, get, mq-ocp-qa-cus/*, allow\n    groups:\
+    \ []\n"
+- target:
+    kind: ApplicationSet
+  patch: "- op: replace\n  path: /metadata/name\n  value: mq-ocp-qa-cus\n- op: replace\n  path: /spec/generators/0/git/directories/0/path\n\
+    \  value: mq/ocp/workloads/mqm/*/overlays/qa/cus\n- op: replace\n  path: /spec/template/metadata/name\n  value:\
+    \ '{{ index .path.segments (sub (len .path.segments) 4) }}-ocp-qa-cus'\n- op: replace\n  path: /spec/template/metadata/labels/environment\n\
+    \  value: qa\n- op: replace\n  path: /spec/template/spec/project\n  value: mq-ocp-qa-cus\n- op: replace\n  path:\
+    \ /spec/template/spec/destination/namespace\n  value: mq-ocp-qa\n- op: remove\n  path: /spec/template/spec/syncPolicy/automated\n"

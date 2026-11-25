@@ -1,0 +1,11 @@
+# Per-pod estimates copied from mq/k8s; customize after workload testing.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+- target:
+    kind: QueueManager
+  patch: "- op: replace\n  path: /spec/queueManager/resources/requests/cpu\n  value: '1'\n- op: replace\n  path:\
+    \ /spec/queueManager/resources/requests/memory\n  value: 2Gi\n- op: replace\n  path: /spec/queueManager/resources/limits/cpu\n\
+    \  value: '2'\n- op: replace\n  path: /spec/queueManager/resources/limits/memory\n  value: 4Gi\n- op: replace\n\
+    \  path: /spec/queueManager/storage/queueManager/size\n  value: 10Gi\n- op: replace\n  path: /spec/queueManager/storage/persistedData/size\n\
+    \  value: 30Gi\n- op: replace\n  path: /spec/queueManager/storage/recoveryLogs/size\n  value: 20Gi\n"
