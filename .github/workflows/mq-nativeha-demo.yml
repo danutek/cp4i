@@ -1,0 +1,95 @@
+name: MQ Native HA VM GitOps Deploy
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "mq/demo/myqmgr.mqsc"
+      - "mq/demo/scripts/**"
+      - ".github/workflows/mq-nativeha-demo.yml"
+  push:
+    branches: [main]
+    paths:
+      - "mq/demo/myqmgr.mqsc"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate and check quorum without applying MQSC changes"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: mq-nativeha-myqmgr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-mqsc:
+    name: Validate MQSC & Governance Policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run MQSC syntax, idempotency, and security checks
+        run: |
+          chmod +x mq/demo/scripts/validate-mqsc.sh
+          ./mq/demo/scripts/validate-mqsc.sh mq/demo/myqmgr.mqsc
+
+      - name: Write validation summary
+        run: |
+          {
+            echo "## MQSC Governance Validation"
+            echo ""
+            echo "- **File:** \`mq/demo/myqmgr.mqsc\`"
+            echo "- **Checks:** Syntax, \`REPLACE\` idempotency, \`DEFPSIST(YES)\` durability, \`CHLAUTH/CONNAUTH\` guardrails, non-destructive policy"
+            echo "- **Result:** Passed"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-nativeha:
+    name: Deploy MQSC to Native HA (MYQMGR)
+    needs: validate-mqsc
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets are configured
+        env:
+          HAS_KEY: ${{ secrets.MQ_SSH_KEY != '' }}
+          HAS_HOST: ${{ secrets.MQ_HOST != '' }}
+        run: |
+          if [[ "$HAS_KEY" != "true" || "$HAS_HOST" != "true" ]]; then
+            echo "ERROR: Required GitHub Secrets (MQ_SSH_KEY and MQ_HOST) are not configured." >&2
+            exit 1
+          fi
+
+      - name: Configure ephemeral SSH key
+        env:
+          MQ_SSH_KEY: ${{ secrets.MQ_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$MQ_SSH_KEY" > ~/.ssh/mq_deploy_key
+          chmod 600 ~/.ssh/mq_deploy_key
+
+      - name: Apply declarative MQSC and verify 3/3 Native HA quorum
+        env:
+          MQ_HOST: ${{ secrets.MQ_HOST }}
+          MQ_HOSTS: ${{ secrets.MQ_HOSTS }}
+          MQ_USER: ${{ secrets.MQ_USER || 'danutek' }}
+          QMGR: MYQMGR
+          MQSC_FILE: mq/demo/myqmgr.mqsc
+          SSH_KEY_FILE: ~/.ssh/mq_deploy_key
+          DRY_RUN: ${{ inputs.dry_run || false }}
+        run: |
+          chmod +x mq/demo/scripts/apply-mqsc.sh
+          ./mq/demo/scripts/apply-mqsc.sh
+
+      - name: Clean up ephemeral SSH key
+        if: always()
+        run: rm -f ~/.ssh/mq_deploy_key
