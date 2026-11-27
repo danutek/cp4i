@@ -65,8 +65,12 @@ else
   echo "$APPLY_OUT"
 
   # Fail on MQSC errors (AMQ*E / AMQ*S) or processing failures
-  if echo "$APPLY_OUT" | grep -Eq "AMQ[0-9]+[ES]:|could not be processed|One command has a syntax error|commands have a syntax error"; then
+  if echo "$APPLY_OUT" | grep -Eq "^AMQ[0-9]+[ES]:|could not be processed|^(One|[0-9]+) commands? ha(s|ve) a syntax error"; then
     echo "ERROR: MQSC application reported errors on ${ACTIVE_HOST}." >&2
+    exit 1
+  fi
+  if ! echo "$APPLY_OUT" | grep -q "No commands have a syntax error." || ! echo "$APPLY_OUT" | grep -q "All valid MQSC commands were processed."; then
+    echo "ERROR: MQSC output did not confirm clean execution on ${ACTIVE_HOST}." >&2
     exit 1
   fi
 fi
