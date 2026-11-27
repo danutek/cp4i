@@ -1,6 +1,6 @@
 * =============================================================================
 * Declarative MQSC Configuration for Native HA Queue Manager: MYQMGR
-* Managed via GitHub Actions CI/CD (Vanguard Demo)
+* Managed via GitHub Actions CI/CD (Ishanti Demo)
 *
 * Rules enforced by CI (mq/demo/scripts/validate-mqsc.sh):
 *   1. All DEFINE statements must use REPLACE (idempotent deployments)
@@ -9,30 +9,30 @@
 *   4. Destructive commands (DELETE / CLEAR) are blocked by default
 * =============================================================================
 
-DEFINE QLOCAL('VANGUARD.DEMO.IN') +
-       DESCR('Vanguard Native HA demo inbound queue - managed via GitOps') +
+DEFINE QLOCAL('ISHANTI.DEMO.IN') +
+       DESCR('Ishanti Native HA demo inbound queue - managed via GitOps') +
        DEFPSIST(YES) +
        MAXDEPTH(50000) +
        BOTHRESH(3) +
-       BOQNAME('VANGUARD.DEMO.DLQ') +
+       BOQNAME('ISHANTI.DEMO.DLQ') +
        REPLACE
 
-DEFINE QLOCAL('VANGUARD.DEMO.OUT') +
-       DESCR('Vanguard Native HA demo outbound queue - managed via GitOps') +
+DEFINE QLOCAL('ISHANTI.DEMO.OUT') +
+       DESCR('Ishanti Native HA demo outbound queue - managed via GitOps') +
        DEFPSIST(YES) +
        MAXDEPTH(50000) +
        REPLACE
 
-DEFINE QLOCAL('VANGUARD.DEMO.DLQ') +
-       DESCR('Vanguard Native HA demo dead-letter queue - managed via GitOps') +
+DEFINE QLOCAL('ISHANTI.DEMO.DLQ') +
+       DESCR('Ishanti Native HA demo dead-letter queue - managed via GitOps') +
        DEFPSIST(YES) +
        MAXDEPTH(50000) +
        REPLACE
 
-DEFINE CHANNEL('VANGUARD.APP.SVRCONN') +
+DEFINE CHANNEL('ISHANTI.APP.SVRCONN') +
        CHLTYPE(SVRCONN) +
        TRPTYPE(TCP) +
        HBINT(60) +
        MAXMSGL(4194304) +
-       DESCR('Vanguard Native HA demo application channel') +
+       DESCR('Ishanti Native HA demo application channel') +
        REPLACE

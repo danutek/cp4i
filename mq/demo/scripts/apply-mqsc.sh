@@ -91,8 +91,8 @@ if ! echo "$NHA_OUT" | grep -q "INSYNC(yes)"; then
 fi
 
 echo ""
-echo "=== Deployed VANGUARD.* Objects on ${QMGR} (replicated to all 3 nodes) ==="
-OBJ_OUT="$(ssh "${SSH_OPTS[@]}" "${MQ_USER}@${ACTIVE_HOST}" "printf \"DIS QLOCAL('VANGUARD.*') CURDEPTH MAXDEPTH DEFPSIST\nDIS CHANNEL('VANGUARD.*') CHLTYPE\n\" | sudo -n -u mqm /opt/mqm/bin/runmqsc '${QMGR}'" 2>&1)"
+echo "=== Deployed ISHANTI.* Objects on ${QMGR} (replicated to all 3 nodes) ==="
+OBJ_OUT="$(ssh "${SSH_OPTS[@]}" "${MQ_USER}@${ACTIVE_HOST}" "printf \"DIS QLOCAL('ISHANTI.*') CURDEPTH MAXDEPTH DEFPSIST\nDIS CHANNEL('ISHANTI.*') CHLTYPE\n\" | sudo -n -u mqm /opt/mqm/bin/runmqsc '${QMGR}'" 2>&1)"
 echo "$OBJ_OUT"
 
 # Append structured summary when running inside GitHub Actions

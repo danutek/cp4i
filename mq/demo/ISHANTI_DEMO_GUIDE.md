@@ -1,4 +1,4 @@
-# Vanguard Demo Guide: IBM MQ Operations Evolution
+# Ishanti Demo Guide: IBM MQ Operations Evolution
 
 **Storyline:** *From RDQM on Cloud VMs → Native HA on VMs (GitHub Actions) → Native HA on Kubernetes/OpenShift (Argo CD) + Governed AI Operations*
 
@@ -26,7 +26,7 @@ Run from the root of this repository:
 # 1. Confirm both QM1 (RDQM) and MYQMGR (Native HA) are healthy with kc1 Active
 ./mq/demo/scripts/demo-ops.sh status
 
-# 2. Confirm baseline VANGUARD.* queues exist on MYQMGR
+# 2. Confirm baseline ISHANTI.* queues exist on MYQMGR
 ./mq/demo/scripts/demo-ops.sh verify-queues
 
 # 3. Confirm GitHub CLI is authenticated
@@ -45,7 +45,7 @@ Have these browser tabs open:
 ## Act 1: RDQM vs. Native HA on the Same 3 VMs (~8 min)
 
 ### Talking Points
-* Validate Vanguard's direction: Native HA on Linux VMs removes the entire **DRBD + Pacemaker + Corosync + LVM** clustering layer that made RDQM complex to install and patch.
+* Validate Ishanti's direction: Native HA on Linux VMs removes the entire **DRBD + Pacemaker + Corosync + LVM** clustering layer that made RDQM complex to install and patch.
 * Both queue managers below are running side-by-side on the exact same 3 RHEL 9.7 VMs.
 
 ### Live Commands
@@ -69,7 +69,7 @@ Optionally prove live persistence:
 
 ### Talking Points
 * **Honest framing:** *"Argo CD reconciles Kubernetes APIs—you can't point it at Linux VMs. For VM-based Native HA, **GitHub Actions** is the right Git-driven automation layer."*
-* **Enterprise security note:** In this public demo repo, GitHub-hosted runners validate PRs (zero secrets exposed) and deploy on merge to `main` via GitHub Secrets. Inside Vanguard's **private GitHub Enterprise** repos, you would run a **self-hosted runner inside the VPC** so SSH/port 22 is never exposed externally.
+* **Enterprise security note:** In this public demo repo, GitHub-hosted runners validate PRs (zero secrets exposed) and deploy on merge to `main` via GitHub Secrets. Inside Ishanti's **private GitHub Enterprise** repos, you would run a **self-hosted runner inside the VPC** so SSH/port 22 is never exposed externally.
 * **Replicated vs. Host-Local split** (reference [native_ha_runbook.md](../NativeHA/native_ha_runbook.md#replicated-vs-host-local-quick-reference)):
   * **MQSC objects** (queues, channels, `AUTHREC`, `CHLAUTH`) only need to be applied to the **Active** node—Native HA replicates them automatically to `tejas1` and `tejas2`.
   * **Host-local state** (`qm.ini`, TLS keystores, `systemd`, OS users/patching) must still be synchronized across all 3 VMs via config management.
@@ -85,7 +85,7 @@ Optionally prove live persistence:
    gh workflow run mq-nativeha-demo.yml -f dry_run=false
    gh run watch
    ```
-3. Show the **GitHub Actions Job Summary** displaying the validation checks, deployed `VANGUARD.*` objects, and verified `QUORUM(3/3)` + `INSYNC(yes)`.
+3. Show the **GitHub Actions Job Summary** displaying the validation checks, deployed `ISHANTI.*` objects, and verified `QUORUM(3/3)` + `INSYNC(yes)`.
 
 ### Pivot to Act 3
 > *"GitHub Actions is **push-based** (event-driven). What happens when someone edits `qm.ini` on `tejas2` at 2 AM, a VM dies and has to be rebuilt from scratch, or you need rolling upgrades across 20 queue managers × 5 environments? That's where Kubernetes + Argo CD shines."*
@@ -100,7 +100,7 @@ Optionally prove live persistence:
   * **Continuous reconciliation:** Argo CD continuously detects and reverts drift.
   * **Self-healing:** Lost pod is rescheduled automatically, reattaches its PVC, and rejoins Native HA quorum with zero manual intervention.
   * **Gated promotion:** Automated sync in `dev`; PR + manual sync approval in `prod`.
-* **Key reassurance for Vanguard:** Native HA on VMs + GitHub Actions uses the **exact same MQ Native HA replication engine and MQSC artifacts** as Kubernetes—so starting on VMs today is a clean stepping stone, not throwaway work.
+* **Key reassurance for Ishanti:** Native HA on VMs + GitHub Actions uses the **exact same MQ Native HA replication engine and MQSC artifacts** as Kubernetes—so starting on VMs today is a clean stepping stone, not throwaway work.
 
 ### Optional Live Command (Render a Prod Kustomize Manifest)
 ```bash
@@ -112,23 +112,23 @@ kubectl kustomize mq/k8s/workloads/mqm/qm-gclr-q/overlays/prod/cus | head -n 60
 ## Act 4: Governed AI-Assisted MQ Operations (~10 min)
 
 ### Framing for Financial Services
-> *"In an enterprise like Vanguard, AI should **never** bypass change control to mutate production ad hoc. Instead, pair AI with GitOps: AI handles triage, authoring, and verification; Git + GitHub Actions / Argo CD enforce review, policy, and auditability."*
+> *"In an enterprise like Ishanti, AI should **never** bypass change control to mutate production ad hoc. Instead, pair AI with GitOps: AI handles triage, authoring, and verification; Git + GitHub Actions / Argo CD enforce review, policy, and auditability."*
 
 ### Live Prompt 1 — Estate-Wide Triage (Read-Only)
 Paste into Antigravity:
-> `Inspect kc1 (169.48.154.115) and give me a health comparison of QM1 (RDQM) and MYQMGR (Native HA), including where each primary is running, quorum/sync status, and current depth of all VANGUARD.* queues.`
+> `Inspect kc1 (169.48.154.115) and give me a health comparison of QM1 (RDQM) and MYQMGR (Native HA), including where each primary is running, quorum/sync status, and current depth of all ISHANTI.* queues.`
 
 ### Live Prompt 2 — AI + GitOps Governed Change (The Crowd-Pleaser)
 Paste into Antigravity:
-> `Add a new persistent local queue named VANGUARD.ORDERS.IN (max depth 50000, backout queue VANGUARD.DEMO.DLQ) to mq/demo/myqmgr.mqsc. Create a feature branch, commit the change, and open a GitHub pull request so GitHub Actions validates it.`
+> `Add a new persistent local queue named ISHANTI.ORDERS.IN (max depth 50000, backout queue ISHANTI.DEMO.DLQ) to mq/demo/myqmgr.mqsc. Create a feature branch, commit the change, and open a GitHub pull request so GitHub Actions validates it.`
 
-Walk Vanguard through the governance loop live:
+Walk Ishanti through the governance loop live:
 1. Antigravity edits [myqmgr.mqsc](./myqmgr.mqsc), runs `validate-mqsc.sh`, pushes a branch, and opens a PR via `gh`.
 2. **GitHub Actions runs `validate-mqsc` automatically on the PR** (show the green check in GitHub).
 3. You review and click **Merge Pull Request** (human approval gate!).
-4. **GitHub Actions automatically deploys `VANGUARD.ORDERS.IN` to `MYQMGR`** and verifies `QUORUM(3/3)`.
+4. **GitHub Actions automatically deploys `ISHANTI.ORDERS.IN` to `MYQMGR`** and verifies `QUORUM(3/3)`.
 5. Ask Antigravity:
-   > `Verify that VANGUARD.ORDERS.IN is live on MYQMGR and confirm Native HA is still 3/3 in sync.`
+   > `Verify that ISHANTI.ORDERS.IN is live on MYQMGR and confirm Native HA is still 3/3 in sync.`
 
 ### Live Prompt 3 — Production AI Architecture (MCP)
 Briefly show [mq/mq_mcp/README.md](../mq_mcp/README.md):
@@ -137,7 +137,7 @@ Briefly show [mq/mq_mcp/README.md](../mq_mcp/README.md):
 ### Optional Finale — Live Native HA Failover
 If you want to end with a live resilience test (putting persistent messages first, failing over `alpha` on `kc1` to `tejas1`/`tejas2`, and showing `alpha` rejoin as `Replica` with `QUORUM(3/3)` and `BACKLOG(0)`):
 ```bash
-./mq/demo/scripts/demo-ops.sh put-test VANGUARD.DEMO.IN
+./mq/demo/scripts/demo-ops.sh put-test ISHANTI.DEMO.IN
 ./mq/demo/scripts/demo-ops.sh failover --confirm
 ```
 
